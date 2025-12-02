@@ -5,6 +5,8 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
@@ -14,7 +16,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role'
+        'admin'
     ];
 
     protected $hidden = [
@@ -25,4 +27,12 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+public function usuario(): HasOne
+{
+    return $this->hasOne(\App\Models\Usuario::class);
 }
+
+    
+}
+

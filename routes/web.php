@@ -9,14 +9,16 @@ use App\Http\Controllers\Admin\EvaluacionController;
 use App\Http\Controllers\Admin\ConstanciaController;
 use App\Http\Controllers\Admin\InformeController;
 use App\Http\Controllers\Admin\ConfiguracionController;
-
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegistroController;
 // Rutas públicas o de usuarios normales
 Route::get('/', function () {
     return view('welcome');
 });
 
 // Grupo de rutas de administración (sin middleware temporalmente para pruebas)
-Route::prefix('admin')->name('admin.')->group(function () {
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function (){
     
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -43,3 +45,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('configuracion', [ConfiguracionController::class, 'index'])->name('configuracion.index');
     Route::put('configuracion', [ConfiguracionController::class, 'update'])->name('configuracion.update');
 });
+
+
+
+Route::get('/registro', [RegistroController::class, 'create'])->name('registro');
+Route::get('/login', [LoginController::class, 'index'])->name('login');
+Route::post('/registro', [RegistroController::class, 'store'])->name('registro.store');
+Route::post('/login', [LoginController::class, 'store'])->name('login.store');

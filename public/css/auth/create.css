@@ -1,0 +1,187 @@
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            background: #1e4a5a;
+            overflow-y: auto;   /* Activa scroll vertical solo cuando se necesite */
+        overflow-x: hidden; 
+            }
+
+.binary-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 40%;
+    height: 100%;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.center-background {
+    position: absolute;
+    top: 0;
+    left: 30%;
+    width: 15%;
+    height: 100%;
+    background: transparent; /* o el color que quieras */
+    overflow: hidden;
+    margin: 0;
+}
+
+.right-background {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 55%; /* completa el 100% */
+    height: 100%;
+    background: #1e4a5a;
+    overflow: hidden;
+}
+
+        .container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8%;
+        }
+
+        .registro-form {
+            background: transparent;
+            padding: 50px 50px;
+            border-radius: 0;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: none;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 42px;
+            font-weight: 300;
+            margin-bottom: 40px;
+            text-align: left;
+            letter-spacing: 1px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #ffffff;
+            font-size: 16px;
+            margin-bottom: 8px;
+            font-weight: 400;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 14px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            background: #ffffff;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+        }
+
+        input::placeholder {
+            color: #999;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: #ffffff;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            font-size: 14px;
+            color: #e0e0e0;
+            cursor: pointer;
+        }
+
+        .checkbox-group a {
+            color: #ffffff;
+            text-decoration: underline;
+            margin-left: 4px;
+        }
+
+        .btn-registrar {
+            width: 100%;
+            padding: 16px;
+            background: transparent;
+            border: 2px solid #ffffff;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-registrar:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-registrar:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .binary-background {
+                width: 100%;
+                opacity: 0.3;
+            }
+
+            .right-background {
+                display: none;
+            }
+
+            .container {
+                justify-content: center;
+                padding: 20px;
+                background: #1e4a5a;
+            }
+
+            .registro-form {
+                padding: 40px 30px;
+            }
+        }
+            .wave-svg {
+                position: absolute;
+                left: 0;
+                width: 100vh;  
+                height: 100vh;
+                transform: rotate(90deg) translateY(30%);
+                margin: 0;
+            }
