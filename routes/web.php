@@ -46,7 +46,20 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::put('configuracion', [ConfiguracionController::class, 'update'])->name('configuracion.update');
 });
 
-
+// Ruta para mostrar la vista de crear evento
+Route::get('/eventos/crear', function () {
+    return view('eventos.create');
+})->name('eventos.create');
+Route::get('/equipos', function () {
+    return view('equipos.index');
+})->name('equipos.index');
+Route::get('/eventos/panel', function () {
+    return view('eventos.panel');
+});
+// Ruta principal
+Route::get('/', function () {
+    return view('welcome');
+});
 
 Route::get('/registro', [RegistroController::class, 'create'])->name('registro');
 Route::get('/login', [LoginController::class, 'index'])->name('login');
