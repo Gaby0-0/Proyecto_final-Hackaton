@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Usuario;
 use App\Models\Equipo;
 use App\Models\Evento;
 use App\Models\Evaluacion;
@@ -14,71 +15,50 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Datos de prueba (comentar cuando tengas la BD lista)
-        $totalUsuarios = 123;
-        $crecimientoUsuarios = 12;
-        $equiposActivos = 45;
-        $crecimientoEquipos = 12;
-        $eventosActivos = 12;
-        $crecimientoEventos = 12;
-        $evaluacionesPendientes = 8;
-        
-        // Eventos recientes de prueba
-        $eventosRecientes = collect([
-            (object)[
-                'id' => 1,
-                'nombre' => 'Hackatón 2025',
-                'fecha_inicio' => now()->subDays(2),
-                'fecha_fin' => now()->addDays(1),
-                'estado' => 'activo',
-                'participantes' => collect(range(1, 89))
-            ],
-            (object)[
-                'id' => 2,
-                'nombre' => 'Desafío de código de primavera',
-                'fecha_inicio' => now()->subDays(10),
-                'fecha_fin' => now()->subDays(8),
-                'estado' => 'programado',
-                'participantes' => collect(range(1, 45))
-            ],
-            (object)[
-                'id' => 3,
-                'nombre' => 'Concurso de Innovación en IA',
-                'fecha_inicio' => now()->subDays(5),
-                'fecha_fin' => now()->addDays(2),
-                'estado' => 'programado',
-                'participantes' => collect(range(1, 67))
-            ]
-        ]);
-        
-        // Actividad del sistema
-        $actividadSistema = [
-            [
-                'tipo' => 'equipo',
-                'mensaje' => 'Nuevo equipo registrado: "Alpha Developers"',
-                'tiempo' => 'Hace 2 horas',
-                'icono' => 'info'
-            ],
-            [
-                'tipo' => 'evaluacion',
-                'mensaje' => 'Evaluación completada para "Beta Coders"',
-                'tiempo' => 'Hace 4 horas',
-                'icono' => 'success'
-            ],
-            [
-                'tipo' => 'archivo',
-                'mensaje' => 'Archivo subido: proyecto_gamma.pdf',
-                'tiempo' => 'Hace 6 horas',
-                'icono' => 'info'
-            ],
-            [
-                'tipo' => 'error',
-                'mensaje' => 'Error en generación de constancia',
-                'tiempo' => 'Hace 1 día',
-                'icono' => 'error'
-            ]
+        // Obtener estadísticas del mes anterior para comparación
+        $mesAnterior = now()->subMonth();
+
+        // Total de usuarios y crecimiento
+        $totalUsuarios = User::count();
+        $usuariosMesAnterior = User::where('created_at', '<=', $mesAnterior)->count();
+        $crecimientoUsuarios = $usuariosMesAnterior > 0
+            ? round((($totalUsuarios - $usuariosMesAnterior) / $usuariosMesAnterior) * 100, 1)
+            : 0;
+
+        // Equipos activos y crecimiento
+        $equiposActivos = Equipo::count();
+        $equiposActivosMesAnterior = Equipo::where('created_at', '<=', $mesAnterior)->count();
+        $crecimientoEquipos = $equiposActivosMesAnterior > 0
+            ? round((($equiposActivos - $equiposActivosMesAnterior) / $equiposActivosMesAnterior) * 100, 1)
+            : 0;
+
+        // Eventos activos
+        $eventosActivos = Evento::count();
+        $eventosActivosMesAnterior = Evento::where('created_at', '<=', $mesAnterior)->count();
+        $crecimientoEventos = $eventosActivosMesAnterior > 0
+            ? round((($eventosActivos - $eventosActivosMesAnterior) / $eventosActivosMesAnterior) * 100, 1)
+            : 0;
+
+        // Evaluaciones pendientes
+        $evaluacionesPendientes = Evaluacion::count();
+
+        // Eventos recientes (últimos 5)
+        $eventosRecientes = Evento::orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        // Actividad reciente del sistema
+        $actividadSistema = $this->obtenerActividadReciente();
+
+        // Usuarios por rol (si existe la tabla de usuarios)
+        $usuariosPorRol = $this->obtenerUsuariosPorRol();
+
+        // Estadísticas de equipos
+        $estadisticasEquipos = [
+            'total' => $equiposActivos,
+            'recientes' => Equipo::where('created_at', '>=', now()->subDays(7))->count(),
         ];
-        
+
         return view('admin.dashboard.index', compact(
             'totalUsuarios',
             'crecimientoUsuarios',
@@ -88,46 +68,66 @@ class DashboardController extends Controller
             'crecimientoEventos',
             'evaluacionesPendientes',
             'eventosRecientes',
-            'actividadSistema'
+            'actividadSistema',
+            'usuariosPorRol',
+            'estadisticasEquipos'
         ));
-        
-        /* DESCOMENTAR CUANDO TENGAS LA BASE DE DATOS LISTA
-        // Obtener estadísticas del mes anterior
-        $mesAnterior = now()->subMonth();
-        
-        // Total de usuarios y crecimiento
-        $totalUsuarios = User::count();
-        $usuariosMesAnterior = User::where('created_at', '<=', $mesAnterior)->count();
-        $crecimientoUsuarios = $usuariosMesAnterior > 0 
-            ? round((($totalUsuarios - $usuariosMesAnterior) / $usuariosMesAnterior) * 100, 1) 
-            : 0;
-        
-        // Equipos activos y crecimiento
-        $equiposActivos = Equipo::where('activo', true)->count();
-        $equiposActivosMesAnterior = Equipo::where('activo', true)
-            ->where('created_at', '<=', $mesAnterior)
-            ->count();
-        $crecimientoEquipos = $equiposActivosMesAnterior > 0 
-            ? round((($equiposActivos - $equiposActivosMesAnterior) / $equiposActivosMesAnterior) * 100, 1) 
-            : 0;
-        
-        // Eventos activos y crecimiento
-        $eventosActivos = Evento::where('estado', 'activo')->count();
-        $eventosActivosMesAnterior = Evento::where('estado', 'activo')
-            ->where('created_at', '<=', $mesAnterior)
-            ->count();
-        $crecimientoEventos = $eventosActivosMesAnterior > 0 
-            ? round((($eventosActivos - $eventosActivosMesAnterior) / $eventosActivosMesAnterior) * 100, 1) 
-            : 0;
-        
-        // Evaluaciones pendientes
-        $evaluacionesPendientes = Evaluacion::where('estado', 'pendiente')->count();
-        
-        // Eventos recientes
-        $eventosRecientes = Evento::with('participantes')
-            ->orderBy('fecha_inicio', 'desc')
-            ->take(3)
-            ->get();
-        */
+    }
+
+    private function obtenerActividadReciente()
+    {
+        $actividades = [];
+
+        // Últimos equipos creados
+        $ultimosEquipos = Equipo::orderBy('created_at', 'desc')->take(3)->get();
+        foreach ($ultimosEquipos as $equipo) {
+            $actividades[] = [
+                'tipo' => 'equipo',
+                'mensaje' => "Nuevo equipo registrado: \"{$equipo->nombre}\"",
+                'tiempo' => $equipo->created_at->diffForHumans(),
+                'icono' => 'info',
+                'fecha' => $equipo->created_at
+            ];
+        }
+
+        // Últimas evaluaciones
+        $ultimasEvaluaciones = Evaluacion::orderBy('created_at', 'desc')->take(2)->get();
+        foreach ($ultimasEvaluaciones as $evaluacion) {
+            $actividades[] = [
+                'tipo' => 'evaluacion',
+                'mensaje' => "Nueva evaluación registrada",
+                'tiempo' => $evaluacion->created_at->diffForHumans(),
+                'icono' => 'success',
+                'fecha' => $evaluacion->created_at
+            ];
+        }
+
+        // Últimos usuarios
+        $ultimosUsuarios = User::orderBy('created_at', 'desc')->take(2)->get();
+        foreach ($ultimosUsuarios as $usuario) {
+            $actividades[] = [
+                'tipo' => 'usuario',
+                'mensaje' => "Nuevo usuario registrado: {$usuario->name}",
+                'tiempo' => $usuario->created_at->diffForHumans(),
+                'icono' => 'info',
+                'fecha' => $usuario->created_at
+            ];
+        }
+
+        // Ordenar por fecha
+        usort($actividades, function($a, $b) {
+            return $b['fecha'] <=> $a['fecha'];
+        });
+
+        return array_slice($actividades, 0, 6);
+    }
+
+    private function obtenerUsuariosPorRol()
+    {
+        return [
+            'administradores' => User::where('admin', 1)->count(),
+            'usuarios' => User::where('admin', 0)->count(),
+            'total' => User::count()
+        ];
     }
 }

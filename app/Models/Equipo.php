@@ -7,6 +7,7 @@ class Equipo extends Model
 {
     protected $fillable = [
         'nombre',
+        'proyecto_id',
         'descripcion',
         'activo'
     ];
@@ -15,13 +16,39 @@ class Equipo extends Model
         'activo' => 'boolean',
     ];
 
-    public function participantes()
+    // Relación con proyecto
+    public function proyecto()
     {
-        return $this->hasMany(Participante::class);
+        return $this->belongsTo(Proyecto::class);
     }
 
+    // Relación muchos a muchos con usuarios (miembros del equipo)
+    public function miembros()
+    {
+        return $this->belongsToMany(User::class, 'equipo_user')
+                    ->withPivot('rol_equipo')
+                    ->withTimestamps();
+    }
+
+    // Obtener solo el líder del equipo
+    public function lider()
+    {
+        return $this->belongsToMany(User::class, 'equipo_user')
+                    ->wherePivot('rol_equipo', 'lider')
+                    ->withTimestamps();
+    }
+
+    // Relación muchos a muchos con eventos (convocatorias)
     public function eventos()
     {
-        return $this->belongsToMany(Evento::class, 'evento_equipo');
+        return $this->belongsToMany(Evento::class, 'equipo_evento')
+                    ->withPivot('estado', 'fecha_inscripcion')
+                    ->withTimestamps();
+    }
+
+    // Relación con evaluaciones
+    public function evaluaciones()
+    {
+        return $this->hasMany(Evaluacion::class);
     }
 }
