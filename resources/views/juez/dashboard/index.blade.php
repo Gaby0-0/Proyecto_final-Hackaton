@@ -1,120 +1,138 @@
-<!DOCTYPE html>
-<html lang="es" class="h-full bg-gray-50">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Juez - ConcursITO</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-</head>
-<body class="h-full">
-    <div class="min-h-full">
-        <!-- Navbar -->
-        <nav class="bg-white shadow-sm">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="flex h-16 justify-between">
-                    <div class="flex">
-                        <div class="flex flex-shrink-0 items-center">
-                            <h1 class="text-xl font-bold text-gray-900">ConcursITO - Panel de Juez</h1>
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="text-sm text-gray-700 mr-4">{{ $user->name }}</span>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="text-sm text-red-600 hover:text-red-800">
-                                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </nav>
+@extends('layouts.juez')
 
-        <!-- Contenido -->
-        <main class="py-10">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                @if(session('success'))
-                <div class="mb-6 rounded-lg bg-green-50 p-4 border border-green-200">
-                    <p class="text-sm font-medium text-green-800">{{ session('success') }}</p>
-                </div>
-                @endif
+@section('title', 'Dashboard')
 
-                <div class="mb-8">
-                    <h2 class="text-3xl font-bold text-gray-900">Bienvenido/a, {{ $user->name }}</h2>
-                    <p class="mt-2 text-gray-600">Panel de Juez - Evaluación de Proyectos</p>
-                </div>
-
-                <!-- Estadísticas -->
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-3 mb-8">
-                    <div class="bg-white overflow-hidden shadow rounded-lg">
-                        <div class="p-5">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-folder-open text-3xl text-blue-600"></i>
-                                </div>
-                                <div class="ml-5 w-0 flex-1">
-                                    <dl>
-                                        <dt class="text-sm font-medium text-gray-500 truncate">Proyectos Asignados</dt>
-                                        <dd class="text-3xl font-bold text-gray-900">0</dd>
-                                    </dl>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white overflow-hidden shadow rounded-lg">
-                        <div class="p-5">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-check-circle text-3xl text-green-600"></i>
-                                </div>
-                                <div class="ml-5 w-0 flex-1">
-                                    <dl>
-                                        <dt class="text-sm font-medium text-gray-500 truncate">Evaluaciones Realizadas</dt>
-                                        <dd class="text-3xl font-bold text-gray-900">0</dd>
-                                    </dl>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white overflow-hidden shadow rounded-lg">
-                        <div class="p-5">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-clock text-3xl text-orange-600"></i>
-                                </div>
-                                <div class="ml-5 w-0 flex-1">
-                                    <dl>
-                                        <dt class="text-sm font-medium text-gray-500 truncate">Pendientes</dt>
-                                        <dd class="text-3xl font-bold text-gray-900">0</dd>
-                                    </dl>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Mensaje -->
-                <div class="bg-white shadow sm:rounded-lg">
-                    <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-lg font-medium text-gray-900">
-                            Sistema en Configuración
-                        </h3>
-                        <div class="mt-2 text-sm text-gray-500">
-                            <p>Tu panel de juez está listo. Próximamente podrás:</p>
-                            <ul class="list-disc list-inside mt-2 space-y-1">
-                                <li>Ver proyectos asignados para evaluación</li>
-                                <li>Calificar proyectos según criterios establecidos</li>
-                                <li>Dejar comentarios y retroalimentación</li>
-                                <li>Ver historial de evaluaciones</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+@section('content')
+<div class="max-w-7xl mx-auto">
+    <!-- Encabezado de Bienvenida -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            Bienvenido/a, {{ auth()->user()->name }}
+        </h1>
+        <p class="text-gray-600">Panel de Juez - EvaluaciÃ³n de Proyectos</p>
     </div>
-</body>
-</html>
+
+    <!-- EstadÃ­sticas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <!-- Total de Equipos -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-users text-2xl text-blue-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 flex-1">
+                        <p class="text-sm font-medium text-gray-600 mb-1">Equipos Disponibles</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ $totalEquipos }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Con proyectos asignados</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-6 py-3">
+                <a href="{{ route('juez.evaluaciones.index') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                    Ver todos los equipos <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Evaluaciones Realizadas -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 flex-1">
+                        <p class="text-sm font-medium text-gray-600 mb-1">Evaluaciones Realizadas</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ $misEvaluaciones }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Total completadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-6 py-3">
+                <a href="{{ route('juez.mis-evaluaciones') }}" class="text-sm text-green-600 hover:text-green-700 font-medium">
+                    Ver mis evaluaciones <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Pendientes -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-clock text-2xl text-orange-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 flex-1">
+                        <p class="text-sm font-medium text-gray-600 mb-1">Pendientes</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ $pendientes }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Por evaluar</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-6 py-3">
+                <a href="{{ route('juez.evaluaciones.index') }}" class="text-sm text-orange-600 hover:text-orange-700 font-medium">
+                    Evaluar ahora <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones RÃ¡pidas -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Acciones RÃ¡pidas</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <a href="{{ route('juez.evaluaciones.index') }}"
+               class="flex items-center p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors group">
+                <div class="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-clipboard-check text-white text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900 group-hover:text-purple-700">Evaluar Equipos</h3>
+                    <p class="text-sm text-gray-600">Revisa y evalÃºa los proyectos de los equipos</p>
+                </div>
+                <i class="fas fa-arrow-right text-purple-600 ml-4"></i>
+            </a>
+
+            <a href="{{ route('juez.mis-evaluaciones') }}"
+               class="flex items-center p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors group">
+                <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-star text-white text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900 group-hover:text-blue-700">Mis Evaluaciones</h3>
+                    <p class="text-sm text-gray-600">Revisa tu historial de evaluaciones</p>
+                </div>
+                <i class="fas fa-arrow-right text-blue-600 ml-4"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- InformaciÃ³n del Sistema -->
+    <div class="bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg shadow-sm p-6 text-white">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-3xl text-purple-200"></i>
+            </div>
+            <div class="ml-4">
+                <h3 class="text-lg font-semibold mb-2">Sistema de EvaluaciÃ³n</h3>
+                <p class="text-purple-100 mb-3">Como juez, puedes evaluar los proyectos de los equipos utilizando los siguientes criterios:</p>
+                <ul class="space-y-1 text-purple-100">
+                    <li><i class="fas fa-lightbulb mr-2"></i>InnovaciÃ³n (0-20 puntos)</li>
+                    <li><i class="fas fa-cogs mr-2"></i>Funcionalidad (0-20 puntos)</li>
+                    <li><i class="fas fa-presentation mr-2"></i>PresentaciÃ³n (0-20 puntos)</li>
+                    <li><i class="fas fa-bullseye mr-2"></i>Impacto (0-20 puntos)</li>
+                    <li><i class="fas fa-code mr-2"></i>Aspectos TÃ©cnicos (0-20 puntos)</li>
+                </ul>
+                <p class="text-purple-100 mt-3 text-sm">La puntuaciÃ³n total serÃ¡ sobre 100 puntos.</p>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection

@@ -13,7 +13,12 @@ class Evaluacion extends Model
         'evaluador_id',
         'puntuacion',
         'comentarios',
-        'estado'
+        'estado',
+        'criterio_innovacion',
+        'criterio_funcionalidad',
+        'criterio_presentacion',
+        'criterio_impacto',
+        'criterio_tecnico'
     ];
 
     protected $casts = [

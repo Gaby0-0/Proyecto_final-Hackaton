@@ -4,7 +4,11 @@
       "Bash(php artisan route:list:*)",
       "Bash(php artisan:*)",
       "Bash(dir:*)",
-      "Bash(if not exist \"resources\\views\\admin\\equipos\" mkdir \"resources\\views\\admin\\equipos\")"
+      "Bash(if not exist \"resources\\views\\admin\\equipos\" mkdir \"resources\\views\\admin\\equipos\")",
+      "Bash(findstr:*)",
+      "Bash(if not exist \"resources\\views\\estudiante\\equipos\" mkdir \"resources\\views\\estudiante\\equipos\")",
+      "Bash(php asignar_codigos.php:*)",
+      "Bash(if not exist \"resources\\views\\juez\\evaluaciones\" mkdir \"resources\\views\\juez\\evaluaciones\")"
     ],
     "deny": [],
     "ask": []

@@ -43,6 +43,7 @@ class EquipoController extends Controller
             'nombre' => 'required|string|max:255',
             'proyecto_id' => 'nullable|exists:proyectos,id',
             'descripcion' => 'nullable|string',
+            'max_integrantes' => 'required|integer|min:2|max:20',
             'lider_id' => 'nullable|exists:users,id',
             'miembros' => 'nullable|array',
             'miembros.*' => 'exists:users,id',
@@ -52,6 +53,7 @@ class EquipoController extends Controller
             'nombre' => $validated['nombre'],
             'proyecto_id' => $validated['proyecto_id'] ?? null,
             'descripcion' => $validated['descripcion'] ?? null,
+            'max_integrantes' => $validated['max_integrantes'],
         ]);
 
         // Asignar líder si se especificó
@@ -95,6 +97,7 @@ class EquipoController extends Controller
             'nombre' => 'required|string|max:255',
             'proyecto_id' => 'nullable|exists:proyectos,id',
             'descripcion' => 'nullable|string',
+            'max_integrantes' => 'required|integer|min:2|max:20',
             'lider_id' => 'nullable|exists:users,id',
             'miembros' => 'nullable|array',
             'miembros.*' => 'exists:users,id',
@@ -104,6 +107,7 @@ class EquipoController extends Controller
             'nombre' => $validated['nombre'],
             'proyecto_id' => $validated['proyecto_id'] ?? null,
             'descripcion' => $validated['descripcion'] ?? null,
+            'max_integrantes' => $validated['max_integrantes'],
         ]);
 
         // Actualizar miembros

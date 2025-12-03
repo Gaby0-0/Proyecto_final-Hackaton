@@ -34,7 +34,12 @@ public function usuario(): HasOne
     return $this->hasOne(\App\Models\Usuario::class);
 }
 
-    
+    // Relación con datos de estudiante
+    public function datosEstudiante()
+    {
+        return $this->hasOne(DatosEstudiante::class);
+    }
+
     // Relación muchos a muchos con equipos
     public function equipos()
     {
@@ -55,6 +60,14 @@ public function usuario(): HasOne
     public function evaluaciones()
     {
         return $this->hasMany(Evaluacion::class, 'evaluador_id');
+    }
+
+    // Equipos asignados (para jueces)
+    public function equiposAsignados()
+    {
+        return $this->belongsToMany(Equipo::class, 'juez_equipo', 'juez_id', 'equipo_id')
+                    ->withPivot('estado', 'fecha_asignacion')
+                    ->withTimestamps();
     }
 
 }
