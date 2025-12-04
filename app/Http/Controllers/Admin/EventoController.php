@@ -4,95 +4,34 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Evento;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EventoController extends Controller
 {
     public function index(Request $request)
     {
-        // Datos de prueba (sin base de datos)
-        $eventos = collect([
-            (object)[
-                'id' => 1,
-                'nombre' => 'Hackatón 2025',
-                'proyecto' => 'Desarrollo de aplicaciones móviles',
-                'fecha_inicio' => '28/02/2025',
-                'fecha_fin' => '02/03/2025',
-                'estado' => 'Activo',
-                'modalidad' => 'Presencial',
-                'participantes_actuales' => 45,
-                'participantes_max' => 100
-            ],
-            (object)[
-                'id' => 2,
-                'nombre' => 'Festival de código virtual',
-                'proyecto' => 'Sistema de Gestión Web',
-                'fecha_inicio' => '14/03/2025',
-                'fecha_fin' => '16/03/2025',
-                'estado' => 'Programado',
-                'modalidad' => 'Virtual',
-                'participantes_actuales' => 82,
-                'participantes_max' => 150
-            ],
-            (object)[
-                'id' => 3,
-                'nombre' => 'Desafío de IA',
-                'proyecto' => 'Aplicación de IA',
-                'fecha_inicio' => '09/04/2025',
-                'fecha_fin' => '11/04/2025',
-                'estado' => 'Programado',
-                'modalidad' => 'Híbrida',
-                'participantes_actuales' => 23,
-                'participantes_max' => 80
-            ],
-            (object)[
-                'id' => 4,
-                'nombre' => 'Concurso de desarrollo web 2024',
-                'proyecto' => 'Plataforma de comercio electrónico',
-                'fecha_inicio' => '30/11/2024',
-                'fecha_fin' => '04/12/2024',
-                'estado' => 'Finalizado',
-                'modalidad' => 'Presencial',
-                'participantes_actuales' => 95,
-                'participantes_max' => 120
-            ],
-            (object)[
-                'id' => 5,
-                'nombre' => 'Innovación móvil',
-                'proyecto' => 'Desarrollo de aplicaciones móviles',
-                'fecha_inicio' => '19/02/2025',
-                'fecha_fin' => '21/02/2025',
-                'estado' => 'Cancelado',
-                'modalidad' => 'Presencial',
-                'participantes_actuales' => 0,
-                'participantes_max' => 60
-            ]
-        ]);
+        try {
+            $query = Evento::withCount('equipos');
 
-        return view('admin.eventos.index', compact('eventos'));
+            // Filtro por búsqueda
+            if ($request->filled('buscar')) {
+                $query->where('nombre', 'like', '%' . $request->buscar . '%');
+            }
 
-        /* DESCOMENTAR CUANDO TENGAS LA BASE DE DATOS
-        $query = Evento::query();
+            // Filtro por estado
+            if ($request->filled('estado') && $request->estado !== 'todos') {
+                $query->where('estado', $request->estado);
+            }
 
-        // Filtro por búsqueda
-        if ($request->filled('buscar')) {
-            $query->where('nombre', 'like', '%' . $request->buscar . '%');
+            $eventos = $query->orderByDesc('fecha_inicio')->paginate(10);
+
+            return view('admin.eventos.index', compact('eventos'));
+        } catch (\Exception $e) {
+            \Log::error('Error en admin.eventos.index: ' . $e->getMessage());
+            return redirect()->route('admin.dashboard')->with('error', 'Error al cargar eventos: ' . $e->getMessage());
         }
-
-        // Filtro por estado
-        if ($request->filled('estado') && $request->estado !== 'todos') {
-            $query->where('estado', $request->estado);
-        }
-
-        // Filtro por modalidad
-        if ($request->filled('modalidad') && $request->modalidad !== 'todas') {
-            $query->where('modalidad', $request->modalidad);
-        }
-
-        $eventos = $query->orderBy('fecha_inicio', 'desc')->paginate(10);
-
-        return view('admin.eventos.index', compact('eventos'));
-        */
     }
 
     public function create()
@@ -106,10 +45,11 @@ class EventoController extends Controller
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
             'fecha_inicio' => 'required|date',
-            'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
+            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
             'estado' => 'required|in:activo,programado,finalizado,cancelado',
             'modalidad' => 'required|in:presencial,virtual,hibrida',
-            'participantes_max' => 'required|integer|min:1'
+            'max_equipos' => 'required|integer|min:1',
+            'tipo' => 'nullable|string'
         ]);
 
         Evento::create($validated);
@@ -120,6 +60,7 @@ class EventoController extends Controller
 
     public function show(Evento $evento)
     {
+        $evento->load(['equipos.miembros', 'equipos.proyecto', 'jueces']);
         return view('admin.eventos.show', compact('evento'));
     }
 
@@ -134,10 +75,11 @@ class EventoController extends Controller
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
             'fecha_inicio' => 'required|date',
-            'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
+            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
             'estado' => 'required|in:activo,programado,finalizado,cancelado',
             'modalidad' => 'required|in:presencial,virtual,hibrida',
-            'participantes_max' => 'required|integer|min:1'
+            'max_equipos' => 'required|integer|min:1',
+            'tipo' => 'nullable|string'
         ]);
 
         $evento->update($validated);
@@ -152,5 +94,145 @@ class EventoController extends Controller
 
         return redirect()->route('admin.eventos.index')
             ->with('success', 'Evento eliminado exitosamente');
+    }
+
+    // Ver solicitudes pendientes de un evento
+    public function solicitudes(Evento $evento)
+    {
+        $solicitudesPendientes = $evento->equiposPendientes()
+            ->with(['miembros', 'proyecto'])
+            ->get();
+
+        $equiposAprobados = $evento->equiposAprobados()
+            ->with(['miembros', 'proyecto'])
+            ->get();
+
+        return view('admin.eventos.solicitudes', compact('evento', 'solicitudesPendientes', 'equiposAprobados'));
+    }
+
+    // Aprobar solicitud de equipo
+    public function aprobarSolicitud(Evento $evento, $equipoId)
+    {
+        // Verificar si hay cupo disponible
+        if (!$evento->tieneCupoDisponible()) {
+            return back()->with('error', 'No hay cupo disponible para este evento');
+        }
+
+        // Actualizar estado de la solicitud
+        $evento->equipos()->updateExistingPivot($equipoId, [
+            'estado' => 'inscrito'
+        ]);
+
+        return back()->with('success', 'Solicitud aprobada exitosamente');
+    }
+
+    // Rechazar solicitud de equipo
+    public function rechazarSolicitud(Evento $evento, $equipoId)
+    {
+        // Eliminar la relación (rechazar)
+        $evento->equipos()->detach($equipoId);
+
+        return back()->with('success', 'Solicitud rechazada');
+    }
+
+    // Mostrar formulario de asignación de jueces a eventos
+    public function asignarJueces(Evento $evento)
+    {
+        // Obtener jueces activos
+        $jueces = User::where('role', 'juez')
+                     ->where('activo', true)
+                     ->whereNotNull('especialidad')
+                     ->with('eventosAsignados')
+                     ->get();
+
+        // Obtener jueces ya asignados a este evento
+        $juecesAsignados = $evento->jueces;
+
+        // Agrupar jueces por especialidad
+        $jucesPorEspecialidad = $jueces->groupBy('especialidad');
+
+        return view('admin.eventos.asignar-jueces', compact('evento', 'jueces', 'juecesAsignados', 'jucesPorEspecialidad'));
+    }
+
+    // Asignar un juez a un evento
+    public function agregarJuez(Request $request, Evento $evento)
+    {
+        $validated = $request->validate([
+            'juez_id' => 'required|exists:users,id',
+        ]);
+
+        // Verificar que el usuario sea un juez
+        $juez = User::findOrFail($validated['juez_id']);
+        if ($juez->role !== 'juez') {
+            return back()->with('error', 'El usuario seleccionado no es un juez');
+        }
+
+        // Verificar si ya está asignado
+        if ($evento->jueces()->where('juez_id', $juez->id)->exists()) {
+            return back()->with('error', 'Este juez ya está asignado a este evento');
+        }
+
+        // Asignar juez al evento
+        $evento->jueces()->attach($juez->id, [
+            'estado' => 'asignado',
+            'fecha_asignacion' => now(),
+        ]);
+
+        return back()->with('success', 'Juez asignado exitosamente al evento');
+    }
+
+    // Desasignar un juez de un evento
+    public function quitarJuez(Evento $evento, $juezId)
+    {
+        $evento->jueces()->detach($juezId);
+
+        return back()->with('success', 'Juez desasignado del evento');
+    }
+
+    // Asignar jueces automáticamente por especialidad
+    public function asignarJuecesAuto(Request $request, Evento $evento)
+    {
+        $validated = $request->validate([
+            'especialidad' => 'nullable|string',
+            'cantidad' => 'required|integer|min:1|max:10',
+        ]);
+
+        $query = User::where('role', 'juez')
+                    ->where('activo', true)
+                    ->whereNotNull('especialidad');
+
+        // Filtrar por especialidad si se proporciona
+        if ($request->filled('especialidad')) {
+            $query->where('especialidad', $request->especialidad);
+        }
+
+        // Obtener jueces disponibles
+        $juecesDisponibles = $query->withCount('eventosAsignados')
+                                  ->orderBy('eventos_asignados_count', 'asc')
+                                  ->get();
+
+        // Filtrar jueces que no estén ya asignados a este evento
+        $juecesYaAsignados = $evento->jueces->pluck('id')->toArray();
+        $juecesDisponibles = $juecesDisponibles->filter(function($juez) use ($juecesYaAsignados) {
+            return !in_array($juez->id, $juecesYaAsignados);
+        });
+
+        if ($juecesDisponibles->isEmpty()) {
+            return back()->with('error', 'No hay jueces disponibles con los criterios especificados');
+        }
+
+        // Tomar la cantidad solicitada
+        $cantidad = min($validated['cantidad'], $juecesDisponibles->count());
+        $juecesSeleccionados = $juecesDisponibles->take($cantidad);
+
+        // Asignar jueces al evento
+        foreach ($juecesSeleccionados as $juez) {
+            $evento->jueces()->attach($juez->id, [
+                'estado' => 'asignado',
+                'fecha_asignacion' => now(),
+            ]);
+        }
+
+        return back()->with('success', "Se asignaron {$cantidad} jueces al evento exitosamente");
     }
 }

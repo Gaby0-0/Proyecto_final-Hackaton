@@ -11,45 +11,6 @@ class UsuarioController extends Controller
 {
     public function index(Request $request)
     {
-        // Datos de prueba
-        $usuarios = collect([
-            (object)[
-                'id' => 1,
-                'nombre' => 'Ana Pérez García',
-                'email' => 'ana.perez@university.edu',
-                'rol' => 'Estudiante',
-                'estado' => 'Activo',
-                'ultimo_acceso' => '15/03/2024 14:30'
-            ],
-            (object)[
-                'id' => 2,
-                'nombre' => 'Dr. Carlos López',
-                'email' => 'carlos.lopez@university.edu',
-                'rol' => 'Juez',
-                'estado' => 'Activo',
-                'ultimo_acceso' => '14/03/2024 09:15'
-            ],
-            (object)[
-                'id' => 3,
-                'nombre' => 'María García Admin',
-                'email' => 'maria.garcia@university.edu',
-                'rol' => 'Administrador',
-                'estado' => 'Activo',
-                'ultimo_acceso' => '15/03/2024 16:45'
-            ],
-            (object)[
-                'id' => 4,
-                'nombre' => 'Luis Rodríguez',
-                'email' => 'luis.rodriguez@university.edu',
-                'rol' => 'Estudiante',
-                'estado' => 'Inactivo',
-                'ultimo_acceso' => '28/02/2024 11:20'
-            ]
-        ]);
-
-        return view('admin.usuarios.index', compact('usuarios'));
-
-        /* DESCOMENTAR CUANDO TENGAS LA BASE DE DATOS
         $query = User::query();
 
         // Filtro por búsqueda
@@ -77,7 +38,6 @@ class UsuarioController extends Controller
         $usuarios = $query->orderBy('created_at', 'desc')->paginate(10);
 
         return view('admin.usuarios.index', compact('usuarios'));
-        */
     }
 
     public function create()

@@ -17,7 +17,11 @@ class User extends Authenticatable
         'email',
         'password',
         'admin',
-        'role'
+        'role',
+        'nombre_completo',
+        'especialidad',
+        'activo',
+        'informacion_completa'
     ];
 
     protected $hidden = [
@@ -27,6 +31,8 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'activo' => 'boolean',
+        'informacion_completa' => 'boolean',
     ];
 
 public function usuario(): HasOne
@@ -68,6 +74,29 @@ public function usuario(): HasOne
         return $this->belongsToMany(Equipo::class, 'juez_equipo', 'juez_id', 'equipo_id')
                     ->withPivot('estado', 'fecha_asignacion')
                     ->withTimestamps();
+    }
+
+    // Eventos asignados (para jueces)
+    public function eventosAsignados()
+    {
+        return $this->belongsToMany(Evento::class, 'evento_juez', 'juez_id', 'evento_id')
+                    ->withPivot('estado', 'fecha_asignacion')
+                    ->withTimestamps();
+    }
+
+    // Verificar si el juez tiene información completa
+    public function tieneInformacionCompleta()
+    {
+        if ($this->role !== 'juez') {
+            return true; // Solo aplica a jueces
+        }
+        return !empty($this->nombre_completo) && !empty($this->especialidad);
+    }
+
+    // Verificar si el usuario está activo
+    public function estaActivo()
+    {
+        return $this->activo;
     }
 
 }

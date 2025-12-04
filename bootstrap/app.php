@@ -15,6 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'juez' => \App\Http\Middleware\JuezMiddleware::class,
             'estudiante' => \App\Http\Middleware\EstudianteMiddleware::class,
+            'usuario.activo' => \App\Http\Middleware\VerificarUsuarioActivo::class,
+            'juez.info' => \App\Http\Middleware\VerificarInformacionJuez::class,
+        ]);
+
+        // Agregar middlewares globales para rutas web
+        $middleware->web(append: [
+            \App\Http\Middleware\VerificarUsuarioActivo::class,
+            \App\Http\Middleware\VerificarInformacionJuez::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

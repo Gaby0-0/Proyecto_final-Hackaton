@@ -10,9 +10,11 @@ use App\Http\Controllers\Admin\EvaluacionController;
 use App\Http\Controllers\Admin\ConstanciaController;
 use App\Http\Controllers\Admin\InformeController;
 use App\Http\Controllers\Admin\ConfiguracionController;
+use App\Http\Controllers\Admin\JuezController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegistroController;
 use App\Http\Controllers\Juez\DashboardController as JuezDashboardController;
+use App\Http\Controllers\Juez\PerfilController as JuezPerfilController;
 use App\Http\Controllers\Estudiante\DashboardController as EstudianteDashboardController;
 // Rutas públicas o de usuarios normales
 Route::get('/', function () {
@@ -33,22 +35,35 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Gestión de eventos
     Route::resource('eventos', EventoController::class);
-    
+    Route::get('eventos/{evento}/asignar-jueces', [EventoController::class, 'asignarJueces'])->name('eventos.asignar-jueces');
+    Route::post('eventos/{evento}/agregar-juez', [EventoController::class, 'agregarJuez'])->name('eventos.agregar-juez');
+    Route::delete('eventos/{evento}/quitar-juez/{juez}', [EventoController::class, 'quitarJuez'])->name('eventos.quitar-juez');
+    Route::post('eventos/{evento}/asignar-jueces-auto', [EventoController::class, 'asignarJuecesAuto'])->name('eventos.asignar-jueces-auto');
+
     // Proyectos
     Route::resource('proyectos', ProyectoController::class);
-    
+
     // Evaluaciones
     Route::resource('evaluaciones', EvaluacionController::class);
-    
+
     // Constancias
     Route::resource('constancias', ConstanciaController::class);
-    
+
     // Informes
     Route::get('informes', [InformeController::class, 'index'])->name('informes.index');
-    
+
     // Configuración
     Route::get('configuracion', [ConfiguracionController::class, 'index'])->name('configuracion.index');
     Route::put('configuracion', [ConfiguracionController::class, 'update'])->name('configuracion.update');
+
+    // Gestión de jueces
+    Route::resource('jueces', JuezController::class);
+
+    // Asignación de jueces
+    Route::get('jueces-asignar', [JuezController::class, 'asignar'])->name('jueces.asignar');
+    Route::post('jueces-asignar-aleatorio', [JuezController::class, 'asignarAleatorio'])->name('jueces.asignar-aleatorio');
+    Route::post('jueces-asignar-manual', [JuezController::class, 'asignarManual'])->name('jueces.asignar-manual');
+    Route::post('jueces-desasignar', [JuezController::class, 'desasignar'])->name('jueces.desasignar');
 });
 
 // Ruta para mostrar la vista de crear evento
@@ -69,6 +84,13 @@ Route::get('/', function () {
 // Rutas para Jueces
 Route::middleware(['auth', 'juez'])->prefix('juez')->name('juez.')->group(function() {
     Route::get('/', [JuezDashboardController::class, 'index'])->name('dashboard');
+
+    // Rutas de perfil
+    Route::get('/perfil/completar', [JuezPerfilController::class, 'completar'])->name('perfil.completar');
+    Route::post('/perfil/guardar', [JuezPerfilController::class, 'guardar'])->name('perfil.guardar');
+    Route::get('/perfil', [JuezPerfilController::class, 'mostrar'])->name('perfil.mostrar');
+    Route::get('/perfil/editar', [JuezPerfilController::class, 'editar'])->name('perfil.editar');
+    Route::put('/perfil', [JuezPerfilController::class, 'actualizar'])->name('perfil.actualizar');
 
     // Rutas de evaluaciones
     Route::get('/evaluaciones', [\App\Http\Controllers\Juez\EvaluacionController::class, 'index'])->name('evaluaciones.index');
