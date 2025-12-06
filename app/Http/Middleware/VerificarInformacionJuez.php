@@ -16,22 +16,8 @@ class VerificarInformacionJuez
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check()) {
-            $user = Auth::user();
-
-            // Solo aplica a jueces
-            if ($user->role === 'juez') {
-                // Verificar si tiene información completa
-                if (!$user->tieneInformacionCompleta()) {
-                    // Permitir acceso solo a las rutas de perfil y logout
-                    if (!$request->routeIs('juez.perfil.*') && !$request->routeIs('logout')) {
-                        return redirect()->route('juez.perfil.completar')
-                            ->with('warning', 'Debes completar tu información de perfil para continuar.');
-                    }
-                }
-            }
-        }
-
+        // Middleware desactivado para permitir pruebas sin información completa
+        // Los jueces pueden acceder sin completar su perfil
         return $next($request);
     }
 }

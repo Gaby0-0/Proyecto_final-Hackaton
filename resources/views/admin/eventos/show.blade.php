@@ -9,7 +9,12 @@ $breadcrumbs = [
     ['name' => 'Eventos', 'url' => route('admin.eventos.index')],
     ['name' => 'Detalles']
 ];
-$pageActions = '<a href="' . route('admin.eventos.edit', $evento->id) . '" class="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors mr-2">
+$solicitudesPendientes = $evento->equiposPendientes()->count();
+$pageActions = '<a href="' . route('admin.eventos.solicitudes', $evento->id) . '" class="inline-flex items-center px-4 py-2.5 bg-yellow-600 text-white text-sm font-semibold rounded-lg hover:bg-yellow-700 transition-colors mr-2">
+    <i class="fas fa-clipboard-list mr-2"></i>
+    Gestionar Solicitudes' . ($solicitudesPendientes > 0 ? ' <span class="ml-2 bg-white text-yellow-600 px-2 py-0.5 rounded-full text-xs font-bold">' . $solicitudesPendientes . '</span>' : '') . '
+</a>
+<a href="' . route('admin.eventos.edit', $evento->id) . '" class="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors mr-2">
     <i class="fas fa-edit mr-2"></i>
     Editar Evento
 </a>
@@ -33,6 +38,19 @@ $pageActions = '<a href="' . route('admin.eventos.edit', $evento->id) . '" class
         <div>
             <label class="block text-sm font-medium text-gray-500 mb-1">Tipo</label>
             <p class="text-base text-gray-900">{{ $evento->tipo ? ucfirst($evento->tipo) : 'No especificado' }}</p>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-500 mb-1">Categoría</label>
+            <p class="text-base text-gray-900">
+                @if($evento->categoria)
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {{ $evento->categoria }}
+                    </span>
+                @else
+                    <span class="text-gray-500">Sin categoría</span>
+                @endif
+            </p>
         </div>
 
         <div class="md:col-span-2">
@@ -215,5 +233,84 @@ $pageActions = '<a href="' . route('admin.eventos.edit', $evento->id) . '" class
         <p class="text-gray-500">No hay equipos inscritos en este evento aún</p>
     </div>
     @endif
+</x-admin.card>
+
+<!-- Acciones Adicionales -->
+<x-admin.card class="mb-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Acciones del Evento</h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Seleccionar Ganador Automático -->
+        <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg p-4">
+            <div class="flex items-center mb-3">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-trophy text-yellow-600 text-2xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h4 class="text-sm font-semibold text-yellow-900">Ganador Automático</h4>
+                    <p class="text-xs text-yellow-700">
+                        @if($evento->equipo_ganador_id)
+                            🏆 {{ $evento->equipoGanador->nombre ?? 'Seleccionado' }}
+                        @else
+                            Seleccionar por mayor calificación
+                        @endif
+                    </p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <form action="{{ route('admin.eventos.establecer-ganador-auto', $evento) }}" method="POST" class="flex-1">
+                    @csrf
+                    <button type="submit"
+                            class="w-full px-3 py-2 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition-colors">
+                        <i class="fas fa-award mr-1"></i>
+                        @if($evento->equipo_ganador_id)
+                            Recalcular
+                        @else
+                            Seleccionar
+                        @endif
+                    </button>
+                </form>
+                @if($evento->equipo_ganador_id)
+                    <form action="{{ route('admin.eventos.quitar-ganador', $evento) }}" method="POST" class="flex-1">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                                class="w-full px-3 py-2 bg-white border border-yellow-600 text-yellow-600 text-sm font-medium rounded-lg hover:bg-yellow-50 transition-colors">
+                            <i class="fas fa-times mr-1"></i>
+                            Quitar
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
+
+        <!-- Generar Constancias -->
+        <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4">
+            <div class="flex items-center mb-3">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-certificate text-green-600 text-2xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h4 class="text-sm font-semibold text-green-900">Constancias</h4>
+                    <p class="text-xs text-green-700">Generar para participantes, ganadores y jueces</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <form action="{{ route('admin.constancias.generar-evento', $evento) }}" method="POST" class="flex-1">
+                    @csrf
+                    <button type="submit"
+                            class="w-full px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-file-certificate mr-1"></i>
+                        Generar
+                    </button>
+                </form>
+                <a href="{{ route('admin.constancias.evento', $evento) }}"
+                   class="flex-1 px-3 py-2 bg-white border border-green-600 text-green-600 text-sm font-medium rounded-lg hover:bg-green-50 transition-colors text-center">
+                    <i class="fas fa-eye mr-1"></i>
+                    Ver
+                </a>
+            </div>
+        </div>
+    </div>
 </x-admin.card>
 @endsection

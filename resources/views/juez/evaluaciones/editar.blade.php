@@ -6,9 +6,9 @@
 <div class="max-w-4xl mx-auto">
     <!-- Breadcrumb -->
     <div class="mb-6">
-        <a href="{{ route('juez.evaluaciones.show', $equipo) }}" class="text-purple-600 hover:text-purple-700 inline-flex items-center">
+        <a href="{{ route('juez.evaluaciones.evento', $evento) }}" class="text-purple-600 hover:text-purple-700 inline-flex items-center">
             <i class="fas fa-arrow-left mr-2"></i>
-            Volver al Equipo
+            Volver a Equipos del Evento
         </a>
     </div>
 
@@ -16,10 +16,10 @@
     <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
         <div class="bg-gradient-to-r from-purple-600 to-purple-800 p-6 text-white">
             <h1 class="text-3xl font-bold mb-2">Editar Evaluación: {{ $equipo->nombre }}</h1>
-            @if($equipo->proyecto)
+            @if($inscripcion && $inscripcion->pivot->proyecto_titulo)
                 <div class="flex items-center text-purple-100">
                     <i class="fas fa-project-diagram mr-2"></i>
-                    <span class="text-lg">{{ $equipo->proyecto->nombre }}</span>
+                    <span class="text-lg">{{ $inscripcion->pivot->proyecto_titulo }}</span>
                 </div>
             @endif
         </div>
@@ -56,7 +56,7 @@
             <p class="text-gray-600">Modifica los criterios y comentarios de tu evaluación.</p>
         </div>
 
-        <form action="{{ route('juez.evaluaciones.update', $equipo) }}" method="POST" x-data="evaluacionForm()">
+        <form action="{{ route('juez.evaluaciones.update', ['evento' => $evento, 'equipo' => $equipo]) }}" method="POST" x-data="evaluacionForm()">
             @csrf
             @method('PUT')
 
@@ -237,7 +237,7 @@
                     <i class="fas fa-save mr-2"></i>
                     Actualizar Evaluación
                 </button>
-                <a href="{{ route('juez.evaluaciones.show', $equipo) }}"
+                <a href="{{ route('juez.evaluaciones.evento', $evento) }}"
                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-colors">
                     <i class="fas fa-times mr-2"></i>
                     Cancelar

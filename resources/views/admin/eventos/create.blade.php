@@ -158,6 +158,23 @@ $breadcrumbs = [
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
+
+            <!-- Categoría -->
+            <div>
+                <label for="categoria" class="block text-sm font-medium text-gray-700 mb-2">
+                    Categoría
+                </label>
+                <input type="text"
+                       id="categoria"
+                       name="categoria"
+                       value="{{ old('categoria') }}"
+                       placeholder="Ej: Desarrollo Web, IoT, Inteligencia Artificial"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('categoria') border-red-500 @enderror">
+                @error('categoria')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+                <p class="mt-1 text-sm text-gray-500">Los equipos solo pueden inscribirse a un evento por categoría</p>
+            </div>
         </div>
 
         <!-- Botones -->

@@ -26,6 +26,7 @@ class EquipoController extends Controller
     {
         $request->validate([
             'codigo' => 'required|string|size:8',
+            'rol_especifico' => 'nullable|string|max:255',
         ]);
 
         $equipo = Equipo::where('codigo', strtoupper($request->codigo))->first();
@@ -52,8 +53,11 @@ class EquipoController extends Controller
             }
         }
 
-        // Unir al usuario como miembro
-        $equipo->miembros()->attach($user->id, ['rol_equipo' => 'miembro']);
+        // Unir al usuario como miembro con rol específico
+        $equipo->miembros()->attach($user->id, [
+            'rol_equipo' => 'miembro',
+            'rol_especifico' => $request->rol_especifico ?? 'Miembro'
+        ]);
 
         return redirect()->route('estudiante.equipos.show', $equipo)
             ->with('success', 'Te has unido exitosamente al equipo ' . $equipo->nombre);
@@ -85,7 +89,10 @@ class EquipoController extends Controller
         ]);
 
         // El creador se convierte automáticamente en líder
-        $equipo->miembros()->attach(Auth::id(), ['rol_equipo' => 'lider']);
+        $equipo->miembros()->attach(Auth::id(), [
+            'rol_equipo' => 'lider',
+            'rol_especifico' => 'Líder del Equipo'
+        ]);
 
         return redirect()->route('estudiante.equipos.index')
             ->with('success', 'Equipo creado exitosamente. Ahora eres el líder del equipo.');

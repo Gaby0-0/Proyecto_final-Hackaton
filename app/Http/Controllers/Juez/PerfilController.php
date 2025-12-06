@@ -33,16 +33,29 @@ class PerfilController extends Controller
         $validated = $request->validate([
             'nombre_completo' => 'required|string|max:255',
             'especialidad' => 'required|string|max:255',
+            'cedula_profesional' => 'nullable|string|max:255',
+            'institucion' => 'nullable|string|max:255',
+            'experiencia' => 'nullable|string',
+            'telefono' => 'nullable|string|max:20',
         ], [
             'nombre_completo.required' => 'El nombre completo es obligatorio.',
             'especialidad.required' => 'La especialidad es obligatoria.',
         ]);
 
-        $user->update([
-            'nombre_completo' => $validated['nombre_completo'],
-            'especialidad' => $validated['especialidad'],
-            'informacion_completa' => true,
-        ]);
+        // Crear o actualizar datos del juez
+        $user->datosJuez()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'nombre_completo' => $validated['nombre_completo'],
+                'especialidad' => $validated['especialidad'],
+                'cedula_profesional' => $validated['cedula_profesional'] ?? null,
+                'institucion' => $validated['institucion'] ?? null,
+                'experiencia' => $validated['experiencia'] ?? null,
+                'telefono' => $validated['telefono'] ?? null,
+                'informacion_completa' => true,
+                'activo' => true,
+            ]
+        );
 
         return redirect()->route('juez.dashboard')
             ->with('success', 'Tu perfil ha sido completado exitosamente.');
@@ -76,9 +89,25 @@ class PerfilController extends Controller
         $validated = $request->validate([
             'nombre_completo' => 'required|string|max:255',
             'especialidad' => 'required|string|max:255',
+            'cedula_profesional' => 'nullable|string|max:255',
+            'institucion' => 'nullable|string|max:255',
+            'experiencia' => 'nullable|string',
+            'telefono' => 'nullable|string|max:20',
         ]);
 
-        $user->update($validated);
+        // Actualizar datos del juez
+        $user->datosJuez()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'nombre_completo' => $validated['nombre_completo'],
+                'especialidad' => $validated['especialidad'],
+                'cedula_profesional' => $validated['cedula_profesional'] ?? null,
+                'institucion' => $validated['institucion'] ?? null,
+                'experiencia' => $validated['experiencia'] ?? null,
+                'telefono' => $validated['telefono'] ?? null,
+                'informacion_completa' => true,
+            ]
+        );
 
         return redirect()->route('juez.perfil.mostrar')
             ->with('success', 'Perfil actualizado exitosamente.');

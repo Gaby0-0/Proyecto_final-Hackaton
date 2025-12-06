@@ -16,12 +16,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'admin',
         'role',
-        'nombre_completo',
-        'especialidad',
         'activo',
-        'informacion_completa'
     ];
 
     protected $hidden = [
@@ -32,7 +28,6 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'activo' => 'boolean',
-        'informacion_completa' => 'boolean',
     ];
 
 public function usuario(): HasOne
@@ -46,11 +41,23 @@ public function usuario(): HasOne
         return $this->hasOne(DatosEstudiante::class);
     }
 
+    // Relación con datos de juez
+    public function datosJuez()
+    {
+        return $this->hasOne(Juez::class);
+    }
+
+    // Relación con datos de administrador
+    public function datosAdministrador()
+    {
+        return $this->hasOne(Administrador::class);
+    }
+
     // Relación muchos a muchos con equipos
     public function equipos()
     {
         return $this->belongsToMany(Equipo::class, 'equipo_user')
-                    ->withPivot('rol_equipo')
+                    ->withPivot('rol_equipo', 'rol_especifico')
                     ->withTimestamps();
     }
 
@@ -64,6 +71,12 @@ public function usuario(): HasOne
 
     // Evaluaciones que ha realizado (para jueces)
     public function evaluaciones()
+    {
+        return $this->hasMany(Evaluacion::class, 'evaluador_id');
+    }
+
+    // Alias para evaluaciones (más semántico para jueces)
+    public function evaluacionesRealizadas()
     {
         return $this->hasMany(Evaluacion::class, 'evaluador_id');
     }
@@ -84,19 +97,81 @@ public function usuario(): HasOne
                     ->withTimestamps();
     }
 
-    // Verificar si el juez tiene información completa
+    // Verificar si el usuario tiene información completa según su rol
     public function tieneInformacionCompleta()
     {
-        if ($this->role !== 'juez') {
-            return true; // Solo aplica a jueces
+        switch ($this->role) {
+            case 'juez':
+                return $this->datosJuez && $this->datosJuez->tieneInformacionCompleta();
+            case 'estudiante':
+                return $this->datosEstudiante && $this->datosEstudiante->datos_completos;
+            case 'admin':
+                return true; // Los admins siempre tienen información completa por defecto
+            default:
+                return false;
         }
-        return !empty($this->nombre_completo) && !empty($this->especialidad);
     }
 
     // Verificar si el usuario está activo
     public function estaActivo()
     {
-        return $this->activo;
+        switch ($this->role) {
+            case 'juez':
+                return $this->datosJuez && $this->datosJuez->estaActivo();
+            case 'estudiante':
+                return true; // Los estudiantes están siempre activos
+            case 'admin':
+                return $this->datosAdministrador && $this->datosAdministrador->estaActivo();
+            default:
+                return false;
+        }
     }
 
+    // Obtener el nombre completo desde la tabla específica
+    public function getNombreCompletoAttribute()
+    {
+        switch ($this->role) {
+            case 'juez':
+                return $this->datosJuez->nombre_completo ?? $this->name;
+            case 'estudiante':
+                return $this->datosEstudiante->nombre_completo ?? $this->name;
+            case 'admin':
+                return $this->datosAdministrador->nombre_completo ?? $this->name;
+            default:
+                return $this->name;
+        }
+    }
+
+    // Obtener los datos específicos según el rol
+    public function obtenerDatosEspecificos()
+    {
+        switch ($this->role) {
+            case 'juez':
+                return $this->datosJuez;
+            case 'estudiante':
+                return $this->datosEstudiante;
+            case 'admin':
+                return $this->datosAdministrador;
+            default:
+                return null;
+        }
+    }
+
+    // Relación con constancias
+    public function constancias()
+    {
+        return $this->hasMany(Constancia::class);
+    }
+
+    // Obtener constancias de ganador
+    public function constanciasGanador()
+    {
+        return $this->hasMany(Constancia::class)->where('tipo', 'ganador');
+    }
+
+    // Obtener constancias de participante
+    public function constanciasParticipante()
+    {
+        return $this->hasMany(Constancia::class)->where('tipo', 'participante');
+    }
 }

@@ -4,87 +4,163 @@ namespace App\Http\Controllers\Juez;
 
 use App\Http\Controllers\Controller;
 use App\Models\Equipo;
+use App\Models\Evento;
 use App\Models\Evaluacion;
-use App\Models\Proyecto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class EvaluacionController extends Controller
 {
-    // Lista de equipos disponibles para evaluar
+    // Lista de eventos asignados con equipos para evaluar
     public function index(Request $request)
     {
-        $query = Equipo::with(['proyecto', 'miembros', 'evaluaciones']);
+        $user = Auth::user();
 
-        // Filtrar solo equipos con proyecto asignado
-        $query->whereNotNull('proyecto_id');
+        // Obtener eventos asignados al juez con equipos que tienen proyectos
+        $eventosAsignados = $user->eventosAsignados()
+            ->with(['equiposAprobados' => function($query) {
+                $query->withPivot([
+                    'proyecto_titulo',
+                    'proyecto_descripcion',
+                    'proyecto_final_url'
+                ]);
+            }])
+            ->orderBy('fecha_inicio', 'desc')
+            ->get()
+            ->map(function($evento) use ($user) {
+                // Filtrar solo equipos con proyecto
+                $equiposConProyecto = $evento->equiposAprobados->filter(function($equipo) {
+                    return !empty($equipo->pivot->proyecto_titulo);
+                });
 
-        // Filtros
-        if ($request->filled('proyecto')) {
-            $query->where('proyecto_id', $request->proyecto);
-        }
+                // Contar cuántos ha evaluado
+                $evaluados = Evaluacion::where('evaluador_id', $user->id)
+                    ->where('evento_id', $evento->id)
+                    ->count();
 
-        if ($request->filled('search')) {
-            $query->where('nombre', 'like', '%' . $request->search . '%');
-        }
+                $evento->equipos_con_proyecto = $equiposConProyecto->count();
+                $evento->equipos_evaluados = $evaluados;
 
-        // Obtener equipos
-        $equipos = $query->latest()->paginate(12);
+                return $evento;
+            });
 
-        // Obtener proyectos para el filtro
-        $proyectos = Proyecto::all();
-
-        return view('juez.evaluaciones.index', compact('equipos', 'proyectos'));
+        return view('juez.evaluaciones.index', compact('eventosAsignados'));
     }
 
-    // Ver detalles del equipo y proyecto para evaluar
-    public function show(Equipo $equipo)
+    // Ver equipos de un evento para evaluar
+    public function verEvento(Evento $evento)
     {
-        $equipo->load(['proyecto', 'miembros', 'evaluaciones.evaluador']);
+        $user = Auth::user();
 
-        // Verificar si el juez ya evaluó este equipo
-        $miEvaluacion = $equipo->evaluaciones()
-            ->where('evaluador_id', Auth::id())
-            ->first();
+        // Verificar que el juez esté asignado a este evento
+        if (!$user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
+            return redirect()->route('juez.evaluaciones.index')
+                ->with('error', 'No tienes acceso a este evento');
+        }
 
-        return view('juez.evaluaciones.show', compact('equipo', 'miEvaluacion'));
+        // Obtener equipos con proyecto del evento
+        $equipos = $evento->equiposAprobados()
+            ->with(['miembros'])
+            ->withPivot([
+                'proyecto_titulo',
+                'proyecto_descripcion',
+                'avances',
+                'proyecto_final_url',
+                'fecha_entrega_final'
+            ])
+            ->get()
+            ->filter(function($equipo) {
+                return !empty($equipo->pivot->proyecto_titulo);
+            })
+            ->map(function($equipo) use ($evento, $user) {
+                // Verificar si ya evaluó este equipo en este evento
+                $evaluacion = Evaluacion::where('evento_id', $evento->id)
+                    ->where('equipo_id', $equipo->id)
+                    ->where('evaluador_id', $user->id)
+                    ->first();
+
+                $equipo->evaluacion_existente = $evaluacion;
+                return $equipo;
+            });
+
+        return view('juez.evaluaciones.evento', compact('evento', 'equipos'));
     }
 
     // Mostrar formulario de evaluación
-    public function crear(Equipo $equipo)
+    public function crear(Evento $evento, Equipo $equipo)
     {
-        $equipo->load('proyecto', 'miembros');
+        $user = Auth::user();
 
-        // Verificar si ya evaluó este equipo
-        $evaluacionExistente = Evaluacion::where('equipo_id', $equipo->id)
-            ->where('evaluador_id', Auth::id())
+        // Verificar que el juez esté asignado al evento
+        if (!$user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
+            return redirect()->route('juez.evaluaciones.index')
+                ->with('error', 'No tienes acceso a este evento');
+        }
+
+        // Verificar si ya evaluó este equipo en este evento
+        $evaluacionExistente = Evaluacion::where('evento_id', $evento->id)
+            ->where('equipo_id', $equipo->id)
+            ->where('evaluador_id', $user->id)
             ->first();
 
         if ($evaluacionExistente) {
-            return redirect()->route('juez.evaluaciones.show', $equipo)
+            return redirect()->route('juez.evaluaciones.evento', $evento)
                 ->with('error', 'Ya has evaluado este equipo. Puedes editar tu evaluación.');
         }
 
-        return view('juez.evaluaciones.crear', compact('equipo'));
+        // Obtener el proyecto del equipo
+        $inscripcion = $equipo->eventos()
+            ->where('evento_id', $evento->id)
+            ->withPivot([
+                'proyecto_titulo',
+                'proyecto_descripcion',
+                'avances',
+                'proyecto_final_url',
+                'fecha_entrega_final'
+            ])
+            ->first();
+
+        if (!$inscripcion || empty($inscripcion->pivot->proyecto_titulo)) {
+            return redirect()->route('juez.evaluaciones.evento', $evento)
+                ->with('error', 'Este equipo no tiene proyecto para evaluar');
+        }
+
+        $equipo->load('miembros');
+
+        // Decodificar avances
+        $avances = [];
+        if ($inscripcion->pivot->avances) {
+            $avances = json_decode($inscripcion->pivot->avances, true) ?? [];
+        }
+
+        return view('juez.evaluaciones.crear', compact('evento', 'equipo', 'inscripcion', 'avances'));
     }
 
     // Guardar evaluación
-    public function store(Request $request, Equipo $equipo)
+    public function store(Request $request, Evento $evento, Equipo $equipo)
     {
-        // Verificar si ya evaluó este equipo
-        $evaluacionExistente = Evaluacion::where('equipo_id', $equipo->id)
-            ->where('evaluador_id', Auth::id())
+        $user = Auth::user();
+
+        // Verificar que el juez esté asignado al evento
+        if (!$user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
+            return redirect()->route('juez.evaluaciones.index')
+                ->with('error', 'No tienes acceso a este evento');
+        }
+
+        // Verificar si ya evaluó este equipo en este evento
+        $evaluacionExistente = Evaluacion::where('evento_id', $evento->id)
+            ->where('equipo_id', $equipo->id)
+            ->where('evaluador_id', $user->id)
             ->first();
 
         if ($evaluacionExistente) {
-            return redirect()->route('juez.evaluaciones.show', $equipo)
+            return redirect()->route('juez.evaluaciones.evento', $evento)
                 ->with('error', 'Ya has evaluado este equipo.');
         }
 
         $validated = $request->validate([
             'puntuacion' => 'required|numeric|min:0|max:100',
             'comentarios' => 'nullable|string',
-            // Criterios específicos
             'criterio_innovacion' => 'nullable|numeric|min:0|max:20',
             'criterio_funcionalidad' => 'nullable|numeric|min:0|max:20',
             'criterio_presentacion' => 'nullable|numeric|min:0|max:20',
@@ -93,8 +169,9 @@ class EvaluacionController extends Controller
         ]);
 
         Evaluacion::create([
+            'evento_id' => $evento->id,
             'equipo_id' => $equipo->id,
-            'evaluador_id' => Auth::id(),
+            'evaluador_id' => $user->id,
             'puntuacion' => $validated['puntuacion'],
             'comentarios' => $validated['comentarios'],
             'criterio_innovacion' => $validated['criterio_innovacion'] ?? null,
@@ -104,33 +181,68 @@ class EvaluacionController extends Controller
             'criterio_tecnico' => $validated['criterio_tecnico'] ?? null,
         ]);
 
-        return redirect()->route('juez.evaluaciones.index')
+        return redirect()->route('juez.evaluaciones.evento', $evento)
             ->with('success', 'Evaluación guardada exitosamente para el equipo ' . $equipo->nombre);
     }
 
     // Editar evaluación existente
-    public function editar(Equipo $equipo)
+    public function editar(Evento $evento, Equipo $equipo)
     {
-        $equipo->load('proyecto', 'miembros');
+        $user = Auth::user();
 
-        $evaluacion = Evaluacion::where('equipo_id', $equipo->id)
-            ->where('evaluador_id', Auth::id())
+        // Verificar que el juez esté asignado al evento
+        if (!$user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
+            return redirect()->route('juez.evaluaciones.index')
+                ->with('error', 'No tienes acceso a este evento');
+        }
+
+        $evaluacion = Evaluacion::where('evento_id', $evento->id)
+            ->where('equipo_id', $equipo->id)
+            ->where('evaluador_id', $user->id)
             ->firstOrFail();
 
-        return view('juez.evaluaciones.editar', compact('equipo', 'evaluacion'));
+        // Obtener el proyecto del equipo
+        $inscripcion = $equipo->eventos()
+            ->where('evento_id', $evento->id)
+            ->withPivot([
+                'proyecto_titulo',
+                'proyecto_descripcion',
+                'avances',
+                'proyecto_final_url',
+                'fecha_entrega_final'
+            ])
+            ->first();
+
+        $equipo->load('miembros');
+
+        // Decodificar avances
+        $avances = [];
+        if ($inscripcion->pivot->avances) {
+            $avances = json_decode($inscripcion->pivot->avances, true) ?? [];
+        }
+
+        return view('juez.evaluaciones.editar', compact('evento', 'equipo', 'evaluacion', 'inscripcion', 'avances'));
     }
 
     // Actualizar evaluación
-    public function update(Request $request, Equipo $equipo)
+    public function update(Request $request, Evento $evento, Equipo $equipo)
     {
-        $evaluacion = Evaluacion::where('equipo_id', $equipo->id)
-            ->where('evaluador_id', Auth::id())
+        $user = Auth::user();
+
+        // Verificar que el juez esté asignado al evento
+        if (!$user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
+            return redirect()->route('juez.evaluaciones.index')
+                ->with('error', 'No tienes acceso a este evento');
+        }
+
+        $evaluacion = Evaluacion::where('evento_id', $evento->id)
+            ->where('equipo_id', $equipo->id)
+            ->where('evaluador_id', $user->id)
             ->firstOrFail();
 
         $validated = $request->validate([
             'puntuacion' => 'required|numeric|min:0|max:100',
             'comentarios' => 'nullable|string',
-            // Criterios específicos
             'criterio_innovacion' => 'nullable|numeric|min:0|max:20',
             'criterio_funcionalidad' => 'nullable|numeric|min:0|max:20',
             'criterio_presentacion' => 'nullable|numeric|min:0|max:20',
@@ -148,7 +260,7 @@ class EvaluacionController extends Controller
             'criterio_tecnico' => $validated['criterio_tecnico'] ?? null,
         ]);
 
-        return redirect()->route('juez.evaluaciones.show', $equipo)
+        return redirect()->route('juez.evaluaciones.evento', $evento)
             ->with('success', 'Evaluación actualizada exitosamente');
     }
 

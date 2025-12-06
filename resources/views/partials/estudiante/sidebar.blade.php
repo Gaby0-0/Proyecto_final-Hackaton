@@ -26,8 +26,8 @@
 
                     <!-- Proyectos -->
                     <li>
-                        <a href="#"
-                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-blue-100 hover:text-white hover:bg-blue-700">
+                        <a href="{{ route('estudiante.proyectos.index') }}"
+                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold {{ request()->routeIs('estudiante.proyectos.*') ? 'bg-blue-700 text-white' : 'text-blue-100 hover:text-white hover:bg-blue-700' }}">
                             <i class="fas fa-project-diagram text-lg w-6"></i>
                             Proyectos
                         </a>
@@ -35,8 +35,8 @@
 
                     <!-- Eventos -->
                     <li>
-                        <a href="#"
-                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-blue-100 hover:text-white hover:bg-blue-700">
+                        <a href="{{ route('estudiante.eventos.index') }}"
+                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold {{ request()->routeIs('estudiante.eventos.*') ? 'bg-blue-700 text-white' : 'text-blue-100 hover:text-white hover:bg-blue-700' }}">
                             <i class="fas fa-calendar text-lg w-6"></i>
                             Eventos
                         </a>
@@ -44,8 +44,8 @@
 
                     <!-- Evaluaciones -->
                     <li>
-                        <a href="#"
-                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-blue-100 hover:text-white hover:bg-blue-700">
+                        <a href="{{ route('estudiante.evaluaciones.index') }}"
+                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold {{ request()->routeIs('estudiante.evaluaciones.*') ? 'bg-blue-700 text-white' : 'text-blue-100 hover:text-white hover:bg-blue-700' }}">
                             <i class="fas fa-star text-lg w-6"></i>
                             Evaluaciones
                         </a>
@@ -53,8 +53,8 @@
 
                     <!-- Constancias -->
                     <li>
-                        <a href="#"
-                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-blue-100 hover:text-white hover:bg-blue-700">
+                        <a href="{{ route('estudiante.constancias.index') }}"
+                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold {{ request()->routeIs('estudiante.constancias.*') ? 'bg-blue-700 text-white' : 'text-blue-100 hover:text-white hover:bg-blue-700' }}">
                             <i class="fas fa-certificate text-lg w-6"></i>
                             Constancias
                         </a>
@@ -66,8 +66,8 @@
             <li class="mt-auto">
                 <ul role="list" class="-mx-2 space-y-1">
                     <li>
-                        <a href="#"
-                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-blue-100 hover:text-white hover:bg-blue-700">
+                        <a href="{{ route('estudiante.perfil.index') }}"
+                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold {{ request()->routeIs('estudiante.perfil.*') ? 'bg-blue-700 text-white' : 'text-blue-100 hover:text-white hover:bg-blue-700' }}">
                             <i class="fas fa-user text-lg w-6"></i>
                             Mi Perfil
                         </a>

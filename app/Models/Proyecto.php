@@ -12,6 +12,8 @@ class Proyecto extends Model
         'nombre',
         'descripcion',
         'categoria',
+        'tecnologias',
+        'requisitos',
         'fecha_inicio',
         'fecha_fin',
     ];

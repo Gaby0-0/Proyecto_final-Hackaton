@@ -33,21 +33,12 @@
                         </a>
                     </li>
 
-                    <!-- Proyectos -->
+                    <!-- Constancias -->
                     <li>
-                        <a href="#"
-                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-purple-100 hover:text-white hover:bg-purple-700">
-                            <i class="fas fa-project-diagram text-lg w-6"></i>
-                            Proyectos
-                        </a>
-                    </li>
-
-                    <!-- Eventos -->
-                    <li>
-                        <a href="#"
-                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-purple-100 hover:text-white hover:bg-purple-700">
-                            <i class="fas fa-calendar text-lg w-6"></i>
-                            Eventos
+                        <a href="{{ route('juez.constancias.index') }}"
+                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold {{ request()->routeIs('juez.constancias.*') ? 'bg-purple-700 text-white' : 'text-purple-100 hover:text-white hover:bg-purple-700' }}">
+                            <i class="fas fa-certificate text-lg w-6"></i>
+                            Mis Constancias
                         </a>
                     </li>
                 </ul>
@@ -57,8 +48,8 @@
             <li class="mt-auto">
                 <ul role="list" class="-mx-2 space-y-1">
                     <li>
-                        <a href="#"
-                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-purple-100 hover:text-white hover:bg-purple-700">
+                        <a href="{{ route('juez.perfil.mostrar') }}"
+                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold {{ request()->routeIs('juez.perfil.*') ? 'bg-purple-700 text-white' : 'text-purple-100 hover:text-white hover:bg-purple-700' }}">
                             <i class="fas fa-user text-lg w-6"></i>
                             Mi Perfil
                         </a>

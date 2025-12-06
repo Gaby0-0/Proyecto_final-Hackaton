@@ -10,7 +10,13 @@
       "Bash(php asignar_codigos.php:*)",
       "Bash(if not exist \"resources\\views\\juez\\evaluaciones\" mkdir \"resources\\views\\juez\\evaluaciones\")",
       "Bash(if not exist \"resources\\views\\admin\\jueces\" mkdir \"resources\\views\\admin\\jueces\")",
-      "Bash(if not exist \"C:\\Users\\itzel\\Documents\\GitHub\\Proyecto_final-Hackaton\\resources\\views\\juez\\perfil\" mkdir \"C:\\Users\\itzel\\Documents\\GitHub\\Proyecto_final-Hackaton\\resources\\views\\juez\\perfil\")"
+      "Bash(if not exist \"C:\\Users\\itzel\\Documents\\GitHub\\Proyecto_final-Hackaton\\resources\\views\\juez\\perfil\" mkdir \"C:\\Users\\itzel\\Documents\\GitHub\\Proyecto_final-Hackaton\\resources\\views\\juez\\perfil\")",
+      "Bash(if not exist \"resources\\views\\estudiante\\proyectos\" mkdir \"resources\\views\\estudiante\\proyectos\")",
+      "Bash(if not exist \"resources\\views\\admin\\evaluaciones\" mkdir \"resources\\views\\admin\\evaluaciones\")",
+      "Bash(if not exist \"resources\\views\\admin\\constancias\" mkdir \"resources\\views\\admin\\constancias\")",
+      "Bash(if not exist \"resources\\views\\admin\\informes\" mkdir \"resources\\views\\admin\\informes\")",
+      "Bash(if not exist \"resources\\views\\estudiante\\evaluaciones\" mkdir \"resources\\views\\estudiante\\evaluaciones\")",
+      "Bash(php reset_database.php:*)"
     ],
     "deny": [],
     "ask": []

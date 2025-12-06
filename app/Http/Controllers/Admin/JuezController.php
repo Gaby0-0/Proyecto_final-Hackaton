@@ -18,26 +18,32 @@ class JuezController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::where('role', 'juez');
+        $query = User::where('role', 'juez')->with('datosJuez');
 
         // Filtro por búsqueda
         if ($request->filled('buscar')) {
             $query->where(function($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->buscar . '%')
                   ->orWhere('email', 'like', '%' . $request->buscar . '%')
-                  ->orWhere('nombre_completo', 'like', '%' . $request->buscar . '%')
-                  ->orWhere('especialidad', 'like', '%' . $request->buscar . '%');
+                  ->orWhereHas('datosJuez', function($subq) use ($request) {
+                      $subq->where('nombre_completo', 'like', '%' . $request->buscar . '%')
+                           ->orWhere('especialidad', 'like', '%' . $request->buscar . '%');
+                  });
             });
         }
 
         // Filtro por especialidad
         if ($request->filled('especialidad')) {
-            $query->where('especialidad', $request->especialidad);
+            $query->whereHas('datosJuez', function($q) use ($request) {
+                $q->where('especialidad', $request->especialidad);
+            });
         }
 
         // Filtro por estado activo
         if ($request->filled('activo')) {
-            $query->where('activo', $request->activo);
+            $query->whereHas('datosJuez', function($q) use ($request) {
+                $q->where('activo', $request->activo);
+            });
         }
 
         $jueces = $query->withCount(['equiposAsignados', 'eventosAsignados'])
@@ -45,7 +51,7 @@ class JuezController extends Controller
                        ->paginate(10);
 
         // Obtener especialidades únicas para el filtro
-        $especialidades = User::where('role', 'juez')
+        $especialidades = DB::table('jueces')
                              ->whereNotNull('especialidad')
                              ->distinct()
                              ->pluck('especialidad');
@@ -70,20 +76,45 @@ class JuezController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
-            'nombre_completo' => 'nullable|string|max:255',
-            'especialidad' => 'nullable|string|max:255',
-            'activo' => 'boolean',
+            'nombre_completo' => 'required|string|max:255',
+            'especialidad' => 'required|string|max:255',
+            'cedula_profesional' => 'nullable|string|max:255',
+            'institucion' => 'nullable|string|max:255',
+            'experiencia' => 'nullable|string',
+            'telefono' => 'nullable|string|max:20',
         ]);
 
-        $validated['password'] = Hash::make($validated['password']);
-        $validated['role'] = 'juez';
-        $validated['activo'] = $request->has('activo');
-        $validated['informacion_completa'] = !empty($validated['nombre_completo']) && !empty($validated['especialidad']);
+        DB::beginTransaction();
+        try {
+            // Crear el usuario
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'juez',
+            ]);
 
-        User::create($validated);
+            // Crear datos del juez en la tabla jueces (siempre activo por defecto)
+            $user->datosJuez()->create([
+                'nombre_completo' => $validated['nombre_completo'],
+                'especialidad' => $validated['especialidad'],
+                'cedula_profesional' => $validated['cedula_profesional'] ?? null,
+                'institucion' => $validated['institucion'] ?? null,
+                'experiencia' => $validated['experiencia'] ?? null,
+                'telefono' => $validated['telefono'] ?? null,
+                'activo' => true, // Siempre activo al crear
+                'informacion_completa' => true, // Ya que nombre_completo y especialidad son requeridos
+            ]);
 
-        return redirect()->route('admin.jueces.index')
-            ->with('success', 'Juez creado exitosamente');
+            DB::commit();
+
+            return redirect()->route('admin.jueces.index')
+                ->with('success', 'Juez creado exitosamente y está activo para ser asignado a eventos');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al crear el juez: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     /**
@@ -96,7 +127,7 @@ class JuezController extends Controller
             abort(404);
         }
 
-        $juez->load(['equiposAsignados.proyecto', 'evaluaciones']);
+        $juez->load(['datosJuez', 'equiposAsignados.proyecto', 'evaluaciones']);
 
         return view('admin.jueces.show', compact('juez'));
     }
@@ -110,6 +141,8 @@ class JuezController extends Controller
         if ($juez->role !== 'juez') {
             abort(404);
         }
+
+        $juez->load('datosJuez');
 
         return view('admin.jueces.edit', compact('juez'));
     }
@@ -129,21 +162,52 @@ class JuezController extends Controller
             'email' => 'required|email|unique:users,email,' . $juez->id,
             'nombre_completo' => 'nullable|string|max:255',
             'especialidad' => 'nullable|string|max:255',
+            'cedula_profesional' => 'nullable|string|max:255',
+            'institucion' => 'nullable|string|max:255',
+            'experiencia' => 'nullable|string',
+            'telefono' => 'nullable|string|max:20',
             'activo' => 'boolean',
         ]);
 
-        if ($request->filled('password')) {
-            $request->validate(['password' => 'min:8|confirmed']);
-            $validated['password'] = Hash::make($request->password);
+        DB::beginTransaction();
+        try {
+            // Actualizar datos del usuario
+            $updateData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+            ];
+
+            if ($request->filled('password')) {
+                $request->validate(['password' => 'min:8|confirmed']);
+                $updateData['password'] = Hash::make($request->password);
+            }
+
+            $juez->update($updateData);
+
+            // Actualizar o crear datos del juez
+            $juez->datosJuez()->updateOrCreate(
+                ['user_id' => $juez->id],
+                [
+                    'nombre_completo' => $validated['nombre_completo'] ?? $validated['name'],
+                    'especialidad' => $validated['especialidad'] ?? '',
+                    'cedula_profesional' => $validated['cedula_profesional'] ?? null,
+                    'institucion' => $validated['institucion'] ?? null,
+                    'experiencia' => $validated['experiencia'] ?? null,
+                    'telefono' => $validated['telefono'] ?? null,
+                    'activo' => $request->has('activo'),
+                    'informacion_completa' => !empty($validated['nombre_completo']) && !empty($validated['especialidad']),
+                ]
+            );
+
+            DB::commit();
+
+            return redirect()->route('admin.jueces.index')
+                ->with('success', 'Juez actualizado exitosamente');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al actualizar el juez: ' . $e->getMessage())
+                ->withInput();
         }
-
-        $validated['activo'] = $request->has('activo');
-        $validated['informacion_completa'] = !empty($validated['nombre_completo']) && !empty($validated['especialidad']);
-
-        $juez->update($validated);
-
-        return redirect()->route('admin.jueces.index')
-            ->with('success', 'Juez actualizado exitosamente');
     }
 
     /**

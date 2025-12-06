@@ -28,7 +28,7 @@ class Equipo extends Model
     public function miembros()
     {
         return $this->belongsToMany(User::class, 'equipo_user')
-                    ->withPivot('rol_equipo')
+                    ->withPivot('rol_equipo', 'rol_especifico')
                     ->withTimestamps();
     }
 
@@ -44,7 +44,16 @@ class Equipo extends Model
     public function eventos()
     {
         return $this->belongsToMany(Evento::class, 'equipo_evento')
-                    ->withPivot('estado', 'fecha_inscripcion')
+                    ->withPivot([
+                        'estado',
+                        'fecha_inscripcion',
+                        'proyecto_titulo',
+                        'proyecto_descripcion',
+                        'avances',
+                        'proyecto_final_url',
+                        'fecha_entrega_final',
+                        'notas_equipo'
+                    ])
                     ->withTimestamps();
     }
 
@@ -100,5 +109,83 @@ class Equipo extends Model
                 $equipo->codigo = self::generarCodigoUnico();
             }
         });
+    }
+
+    // Verificar si el equipo puede inscribirse a un evento según la categoría
+    public function puedeInscribirseAEvento(Evento $evento)
+    {
+        // Si el evento no tiene categoría, permitir inscripción
+        if (!$evento->categoria) {
+            return true;
+        }
+
+        // Obtener eventos a los que el equipo ya está inscrito o pendiente
+        $eventosInscritos = $this->eventos()
+            ->whereIn('equipo_evento.estado', ['pendiente', 'inscrito', 'participando'])
+            ->get();
+
+        // Verificar si ya está inscrito en un evento de la misma categoría
+        foreach ($eventosInscritos as $eventoInscrito) {
+            if ($eventoInscrito->categoria === $evento->categoria) {
+                return false; // Ya está inscrito en un evento de esta categoría
+            }
+        }
+
+        return true;
+    }
+
+    // Verificar si el usuario actual es líder del equipo
+    public function usuarioEsLider($userId)
+    {
+        return $this->miembros()
+            ->where('user_id', $userId)
+            ->wherePivot('rol_equipo', 'lider')
+            ->exists();
+    }
+
+    // Verificar si el equipo ya está inscrito o tiene solicitud pendiente en un evento
+    public function estaInscritoEnEvento($eventoId)
+    {
+        return $this->eventos()
+            ->where('evento_id', $eventoId)
+            ->whereIn('equipo_evento.estado', ['pendiente', 'inscrito', 'participando'])
+            ->exists();
+    }
+
+    // Verificar si el equipo tiene proyecto subido para un evento
+    public function tieneProyectoEnEvento($eventoId)
+    {
+        $evento = $this->eventos()
+            ->where('evento_id', $eventoId)
+            ->withPivot('proyecto_titulo', 'proyecto_descripcion')
+            ->first();
+
+        if (!$evento) {
+            return false;
+        }
+
+        return !empty($evento->pivot->proyecto_titulo) && !empty($evento->pivot->proyecto_descripcion);
+    }
+
+    // Obtener el proyecto de un evento específico
+    public function obtenerProyectoEvento($eventoId)
+    {
+        return $this->eventos()
+            ->where('evento_id', $eventoId)
+            ->withPivot([
+                'proyecto_titulo',
+                'proyecto_descripcion',
+                'avances',
+                'proyecto_final_url',
+                'fecha_entrega_final',
+                'notas_equipo'
+            ])
+            ->first();
+    }
+
+    // Relación con constancias
+    public function constancias()
+    {
+        return $this->hasMany(Constancia::class);
     }
 }
