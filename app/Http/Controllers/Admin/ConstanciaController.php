@@ -39,7 +39,6 @@ class ConstanciaController extends Controller
         // Estadísticas
         $totalConstancias = Constancia::count();
         $constanciasGanador = Constancia::where('tipo', 'ganador')->count();
-        $constanciasParticipante = Constancia::where('tipo', 'participante')->count();
         $constanciasJuez = Constancia::where('tipo', 'juez')->count();
 
         return view('admin.constancias.index', compact(
@@ -47,7 +46,6 @@ class ConstanciaController extends Controller
             'eventos',
             'totalConstancias',
             'constanciasGanador',
-            'constanciasParticipante',
             'constanciasJuez'
         ));
     }
@@ -63,19 +61,25 @@ class ConstanciaController extends Controller
     // Generar constancias para un evento
     public function generarPorEvento(Evento $evento)
     {
-        // Generar constancias de participante para todos
-        $participantes = $evento->generarConstanciasParticipantes();
-
-        // Si hay ganador, generar constancias de ganador
-        $ganadores = 0;
-        if ($evento->equipo_ganador_id) {
-            $ganadores = $evento->generarConstanciaGanador();
+        // Validar que el evento esté finalizado
+        if (!$evento->puedeGenerarConstancias()) {
+            return back()->with('error', 'No se pueden generar constancias. El evento debe estar marcado como "Finalizado" para expedir constancias.');
         }
 
-        // Generar constancias para jueces
-        $jueces = $evento->generarConstanciasJueces();
+        try {
+            // Generar constancias de ganadores (si existen)
+            $ganadores = 0;
+            if ($evento->tieneGanador()) {
+                $ganadores = $evento->generarConstanciasGanadores();
+            }
 
-        return back()->with('success', "Se generaron {$participantes} constancias de participante, {$ganadores} de ganador y {$jueces} reconocimientos de jueces para el evento {$evento->nombre}");
+            // Generar constancias para jueces
+            $jueces = $evento->generarConstanciasJueces();
+
+            return back()->with('success', "Se generaron {$ganadores} constancias de ganadores y {$jueces} reconocimientos de jueces para el evento {$evento->nombre}");
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al generar constancias: ' . $e->getMessage());
+        }
     }
 
     // Eliminar constancia

@@ -134,7 +134,8 @@ public function usuario(): HasOne
             case 'juez':
                 return $this->datosJuez->nombre_completo ?? $this->name;
             case 'estudiante':
-                return $this->datosEstudiante->nombre_completo ?? $this->name;
+                // Para estudiantes, usar directamente el nombre del usuario
+                return $this->name;
             case 'admin':
                 return $this->datosAdministrador->nombre_completo ?? $this->name;
             default:

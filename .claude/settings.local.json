@@ -16,7 +16,8 @@
       "Bash(if not exist \"resources\\views\\admin\\constancias\" mkdir \"resources\\views\\admin\\constancias\")",
       "Bash(if not exist \"resources\\views\\admin\\informes\" mkdir \"resources\\views\\admin\\informes\")",
       "Bash(if not exist \"resources\\views\\estudiante\\evaluaciones\" mkdir \"resources\\views\\estudiante\\evaluaciones\")",
-      "Bash(php reset_database.php:*)"
+      "Bash(php reset_database.php:*)",
+      "Bash(mv:*)"
     ],
     "deny": [],
     "ask": []

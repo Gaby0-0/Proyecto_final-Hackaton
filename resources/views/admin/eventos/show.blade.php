@@ -240,44 +240,78 @@ $pageActions = '<a href="' . route('admin.eventos.solicitudes', $evento->id) . '
     <h3 class="text-lg font-semibold text-gray-900 mb-4">Acciones del Evento</h3>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Seleccionar Ganador Automático -->
-        <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg p-4">
+        <!-- Seleccionar 3 Ganadores Automáticos -->
+        <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg p-4 md:col-span-2">
             <div class="flex items-center mb-3">
                 <div class="flex-shrink-0">
                     <i class="fas fa-trophy text-yellow-600 text-2xl"></i>
                 </div>
                 <div class="ml-3">
-                    <h4 class="text-sm font-semibold text-yellow-900">Ganador Automático</h4>
-                    <p class="text-xs text-yellow-700">
-                        @if($evento->equipo_ganador_id)
-                            🏆 {{ $evento->equipoGanador->nombre ?? 'Seleccionado' }}
-                        @else
-                            Seleccionar por mayor calificación
-                        @endif
-                    </p>
+                    <h4 class="text-sm font-semibold text-yellow-900">Ganadores Automáticos (Top 3)</h4>
+                    <p class="text-xs text-yellow-700">Seleccionar por mayores calificaciones</p>
                 </div>
             </div>
+
+            @if($evento->tieneGanador())
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                    <!-- Primer Lugar -->
+                    @if($evento->equipo_primer_lugar_id)
+                        <div class="bg-white border-2 border-yellow-400 rounded-lg p-3">
+                            <div class="text-center">
+                                <div class="text-2xl mb-1">🥇</div>
+                                <div class="text-xs font-semibold text-yellow-900 mb-1">1er Lugar</div>
+                                <div class="text-sm font-bold text-gray-900">{{ $evento->equipoPrimerLugar->nombre ?? 'N/A' }}</div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Segundo Lugar -->
+                    @if($evento->equipo_segundo_lugar_id)
+                        <div class="bg-white border-2 border-gray-400 rounded-lg p-3">
+                            <div class="text-center">
+                                <div class="text-2xl mb-1">🥈</div>
+                                <div class="text-xs font-semibold text-gray-700 mb-1">2do Lugar</div>
+                                <div class="text-sm font-bold text-gray-900">{{ $evento->equipoSegundoLugar->nombre ?? 'N/A' }}</div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Tercer Lugar -->
+                    @if($evento->equipo_tercer_lugar_id)
+                        <div class="bg-white border-2 border-orange-400 rounded-lg p-3">
+                            <div class="text-center">
+                                <div class="text-2xl mb-1">🥉</div>
+                                <div class="text-xs font-semibold text-orange-700 mb-1">3er Lugar</div>
+                                <div class="text-sm font-bold text-gray-900">{{ $evento->equipoTercerLugar->nombre ?? 'N/A' }}</div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            @else
+                <p class="text-sm text-yellow-700 mb-3">No se han seleccionado ganadores aún</p>
+            @endif
+
             <div class="flex gap-2">
                 <form action="{{ route('admin.eventos.establecer-ganador-auto', $evento) }}" method="POST" class="flex-1">
                     @csrf
                     <button type="submit"
                             class="w-full px-3 py-2 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition-colors">
                         <i class="fas fa-award mr-1"></i>
-                        @if($evento->equipo_ganador_id)
-                            Recalcular
+                        @if($evento->tieneGanador())
+                            Recalcular 3 Ganadores
                         @else
-                            Seleccionar
+                            Seleccionar 3 Ganadores
                         @endif
                     </button>
                 </form>
-                @if($evento->equipo_ganador_id)
+                @if($evento->tieneGanador())
                     <form action="{{ route('admin.eventos.quitar-ganador', $evento) }}" method="POST" class="flex-1">
                         @csrf
                         @method('DELETE')
                         <button type="submit"
                                 class="w-full px-3 py-2 bg-white border border-yellow-600 text-yellow-600 text-sm font-medium rounded-lg hover:bg-yellow-50 transition-colors">
                             <i class="fas fa-times mr-1"></i>
-                            Quitar
+                            Quitar Ganadores
                         </button>
                     </form>
                 @endif
@@ -285,21 +319,32 @@ $pageActions = '<a href="' . route('admin.eventos.solicitudes', $evento->id) . '
         </div>
 
         <!-- Generar Constancias -->
-        <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4">
+        <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4 md:col-span-2">
             <div class="flex items-center mb-3">
                 <div class="flex-shrink-0">
                     <i class="fas fa-certificate text-green-600 text-2xl"></i>
                 </div>
                 <div class="ml-3">
                     <h4 class="text-sm font-semibold text-green-900">Constancias</h4>
-                    <p class="text-xs text-green-700">Generar para participantes, ganadores y jueces</p>
+                    <p class="text-xs text-green-700">Generar para ganadores y jueces (solo eventos finalizados)</p>
                 </div>
             </div>
+
+            @if(!$evento->estaFinalizado())
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
+                    <p class="text-xs text-yellow-800">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        El evento debe estar marcado como <strong>"Finalizado"</strong> para generar constancias.
+                    </p>
+                </div>
+            @endif
+
             <div class="flex gap-2">
                 <form action="{{ route('admin.constancias.generar-evento', $evento) }}" method="POST" class="flex-1">
                     @csrf
                     <button type="submit"
-                            class="w-full px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                            {{ !$evento->estaFinalizado() ? 'disabled' : '' }}
+                            class="w-full px-3 py-2 {{ $evento->estaFinalizado() ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed' }} text-white text-sm font-medium rounded-lg transition-colors">
                         <i class="fas fa-file-certificate mr-1"></i>
                         Generar
                     </button>

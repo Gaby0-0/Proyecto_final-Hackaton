@@ -6,8 +6,11 @@
 <div class="container mx-auto px-4 py-6">
     <!-- Encabezado -->
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Mis Proyectos</h1>
-        <p class="text-gray-600 mt-2">Gestiona los proyectos de tus equipos inscritos en eventos</p>
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-project-diagram text-blue-600 mr-3"></i>
+            Mis Proyectos Activos
+        </h1>
+        <p class="text-gray-600 mt-2">Gestiona los proyectos de tus equipos en eventos activos donde estás participando</p>
     </div>
 
     @if($equipos->isEmpty())
@@ -15,8 +18,8 @@
         <div class="bg-white rounded-lg shadow-md p-12 text-center">
             <div class="flex flex-col items-center">
                 <i class="fas fa-project-diagram text-6xl text-gray-300 mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-700 mb-2">No tienes proyectos</h3>
-                <p class="text-gray-500 mb-6">Inscríbete a un evento con tu equipo para empezar a trabajar en proyectos</p>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">No tienes proyectos activos</h3>
+                <p class="text-gray-500 mb-6">Inscríbete a un evento activo con tu equipo para empezar a trabajar en proyectos</p>
                 <a href="{{ route('estudiante.eventos.index') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                     <i class="fas fa-calendar-plus mr-2"></i>
                     Ver Eventos Disponibles

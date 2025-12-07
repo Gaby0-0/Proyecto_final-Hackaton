@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('constancias', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('equipo_id')->constrained('equipos')->onDelete('cascade');
+            $table->foreignId('equipo_id')->nullable()->constrained('equipos')->onDelete('cascade');
             $table->foreignId('evento_id')->constrained('eventos')->onDelete('cascade');
             $table->enum('tipo', ['ganador', 'participante'])->default('participante');
             $table->string('numero_folio')->unique();

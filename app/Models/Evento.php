@@ -16,7 +16,9 @@ class Evento extends Model
         'categoria',
         'max_equipos',
         'modalidad',
-        'equipo_ganador_id',
+        'equipo_primer_lugar_id',
+        'equipo_segundo_lugar_id',
+        'equipo_tercer_lugar_id',
         'fecha_seleccion_ganador'
     ];
 
@@ -91,16 +93,53 @@ class Evento extends Model
                $this->tieneCupoDisponible();
     }
 
-    // Relación con el equipo ganador
+    // Relaciones con los equipos ganadores
+    public function equipoPrimerLugar()
+    {
+        return $this->belongsTo(Equipo::class, 'equipo_primer_lugar_id');
+    }
+
+    public function equipoSegundoLugar()
+    {
+        return $this->belongsTo(Equipo::class, 'equipo_segundo_lugar_id');
+    }
+
+    public function equipoTercerLugar()
+    {
+        return $this->belongsTo(Equipo::class, 'equipo_tercer_lugar_id');
+    }
+
+    // Método legacy para compatibilidad con código existente
     public function equipoGanador()
     {
-        return $this->belongsTo(Equipo::class, 'equipo_ganador_id');
+        return $this->equipoPrimerLugar();
     }
 
     // Verificar si ya tiene equipo ganador
     public function tieneGanador()
     {
-        return !is_null($this->equipo_ganador_id);
+        return !is_null($this->equipo_primer_lugar_id);
+    }
+
+    // Verificar si tiene todos los ganadores definidos
+    public function tieneTresGanadores()
+    {
+        return !is_null($this->equipo_primer_lugar_id) &&
+               !is_null($this->equipo_segundo_lugar_id) &&
+               !is_null($this->equipo_tercer_lugar_id);
+    }
+
+    // Verificar si el evento está finalizado
+    public function estaFinalizado()
+    {
+        return $this->estado === 'finalizado';
+    }
+
+    // Verificar si puede generar constancias
+    public function puedeGenerarConstancias()
+    {
+        // Solo puede generar constancias si el evento está finalizado
+        return $this->estaFinalizado();
     }
 
     // Obtener el promedio de evaluación de un equipo en este evento
@@ -174,21 +213,46 @@ class Evento extends Model
         return $equiposEvaluados->first();
     }
 
-    // Establecer ganador automáticamente
-    public function establecerGanadorAutomatico()
+    // Determinar los 3 mejores equipos automáticamente
+    public function determinarTresGanadoresAutomatico()
     {
-        $ganador = $this->determinarGanadorAutomatico();
+        $equiposConPromedios = $this->equiposConPromedios();
 
-        if ($ganador) {
-            $this->update([
-                'equipo_ganador_id' => $ganador->id,
-                'fecha_seleccion_ganador' => now(),
-            ]);
-
-            return $ganador;
+        if ($equiposConPromedios->isEmpty()) {
+            return collect();
         }
 
-        return null;
+        // Filtrar solo equipos que tengan al menos una evaluación
+        $equiposEvaluados = $equiposConPromedios->filter(function($equipo) {
+            return !is_null($equipo->promedio_evaluacion) && $equipo->num_evaluaciones > 0;
+        });
+
+        if ($equiposEvaluados->isEmpty()) {
+            return collect();
+        }
+
+        // Retornar los 3 mejores (ya están ordenados por promedio descendente)
+        return $equiposEvaluados->take(3);
+    }
+
+    // Establecer ganador automáticamente (solo 1er lugar - método legacy)
+    public function establecerGanadorAutomatico()
+    {
+        $ganadores = $this->determinarTresGanadoresAutomatico();
+
+        if ($ganadores->isEmpty()) {
+            return null;
+        }
+
+        // Establecer los 3 ganadores si hay al menos 3 equipos evaluados
+        $this->update([
+            'equipo_primer_lugar_id' => $ganadores->get(0)->id ?? null,
+            'equipo_segundo_lugar_id' => $ganadores->get(1)->id ?? null,
+            'equipo_tercer_lugar_id' => $ganadores->get(2)->id ?? null,
+            'fecha_seleccion_ganador' => now(),
+        ]);
+
+        return $ganadores;
     }
 
     // Relación con constancias
@@ -197,30 +261,74 @@ class Evento extends Model
         return $this->hasMany(Constancia::class);
     }
 
-    // Generar constancias para todos los participantes
+    // Generar constancias para todos los participantes (DEPRECADO - Solo ganadores y jueces)
     public function generarConstanciasParticipantes()
     {
-        $equiposParticipantes = $this->equiposAprobados()
-            ->with(['miembros'])
-            ->get();
+        // Ya no se generan constancias de participantes
+        // Solo se generan para ganadores y jueces
+        return 0;
+    }
+
+    // Generar constancia para el equipo ganador (método actualizado para 3 lugares)
+    public function generarConstanciaGanador()
+    {
+        return $this->generarConstanciasGanadores();
+    }
+
+    // Generar constancias para los 3 equipos ganadores
+    public function generarConstanciasGanadores()
+    {
+        // Validar que el evento esté finalizado
+        if (!$this->puedeGenerarConstancias()) {
+            throw new \Exception('No se pueden generar constancias. El evento debe estar finalizado.');
+        }
 
         $constanciasGeneradas = 0;
 
-        foreach ($equiposParticipantes as $equipo) {
+        // Definir los ganadores y sus lugares
+        $ganadores = [
+            ['id' => $this->equipo_primer_lugar_id, 'lugar' => 1, 'texto' => '1er lugar'],
+            ['id' => $this->equipo_segundo_lugar_id, 'lugar' => 2, 'texto' => '2do lugar'],
+            ['id' => $this->equipo_tercer_lugar_id, 'lugar' => 3, 'texto' => '3er lugar'],
+        ];
+
+        foreach ($ganadores as $ganadorInfo) {
+            if (!$ganadorInfo['id']) {
+                continue; // Saltar si no hay equipo para este lugar
+            }
+
+            $equipo = Equipo::with('miembros')->find($ganadorInfo['id']);
+
+            if (!$equipo) {
+                continue;
+            }
+
+            // Obtener el nombre del proyecto desde la tabla pivot
+            $inscripcion = $equipo->eventos()
+                ->where('evento_id', $this->id)
+                ->withPivot('proyecto_titulo')
+                ->first();
+
+            $proyectoNombre = $inscripcion->pivot->proyecto_titulo ?? 'Proyecto del equipo ' . $equipo->nombre;
+
             foreach ($equipo->miembros as $miembro) {
-                // Verificar que no exista ya una constancia para este usuario en este evento
+                // Verificar si ya existe constancia de ganador para este lugar
                 $existe = Constancia::where('user_id', $miembro->id)
                     ->where('evento_id', $this->id)
-                    ->where('equipo_id', $equipo->id)
+                    ->where('tipo', 'ganador')
+                    ->where('lugar', $ganadorInfo['lugar'])
                     ->exists();
 
                 if (!$existe) {
+                    // Crear nueva constancia de ganador
                     Constancia::create([
                         'user_id' => $miembro->id,
                         'equipo_id' => $equipo->id,
                         'evento_id' => $this->id,
-                        'tipo' => 'participante',
-                        'descripcion' => 'Constancia de participación en ' . $this->nombre,
+                        'tipo' => 'ganador',
+                        'lugar' => $ganadorInfo['lugar'],
+                        'proyecto_nombre' => $proyectoNombre,
+                        'descripcion' => 'Constancia de ' . $ganadorInfo['texto'] . ' en ' . $this->nombre,
                     ]);
                     $constanciasGeneradas++;
                 }
@@ -230,60 +338,14 @@ class Evento extends Model
         return $constanciasGeneradas;
     }
 
-    // Generar constancia para el equipo ganador
-    public function generarConstanciaGanador()
-    {
-        if (!$this->equipo_ganador_id) {
-            return 0;
-        }
-
-        $equipoGanador = $this->equipoGanador()->with('miembros')->first();
-
-        if (!$equipoGanador) {
-            return 0;
-        }
-
-        $constanciasGeneradas = 0;
-
-        foreach ($equipoGanador->miembros as $miembro) {
-            // Verificar si ya existe constancia de ganador
-            $existe = Constancia::where('user_id', $miembro->id)
-                ->where('evento_id', $this->id)
-                ->where('tipo', 'ganador')
-                ->exists();
-
-            if (!$existe) {
-                // Si existe constancia de participante, actualizarla a ganador
-                $constanciaParticipante = Constancia::where('user_id', $miembro->id)
-                    ->where('evento_id', $this->id)
-                    ->where('tipo', 'participante')
-                    ->first();
-
-                if ($constanciaParticipante) {
-                    $constanciaParticipante->update([
-                        'tipo' => 'ganador',
-                        'descripcion' => 'Constancia de 1er lugar en ' . $this->nombre,
-                    ]);
-                } else {
-                    // Crear nueva constancia de ganador
-                    Constancia::create([
-                        'user_id' => $miembro->id,
-                        'equipo_id' => $equipoGanador->id,
-                        'evento_id' => $this->id,
-                        'tipo' => 'ganador',
-                        'descripcion' => 'Constancia de 1er lugar en ' . $this->nombre,
-                    ]);
-                }
-                $constanciasGeneradas++;
-            }
-        }
-
-        return $constanciasGeneradas;
-    }
-
     // Generar constancias para los jueces asignados
     public function generarConstanciasJueces()
     {
+        // Validar que el evento esté finalizado
+        if (!$this->puedeGenerarConstancias()) {
+            throw new \Exception('No se pueden generar constancias. El evento debe estar finalizado.');
+        }
+
         $jueces = $this->jueces;
 
         if ($jueces->isEmpty()) {
@@ -303,6 +365,7 @@ class Evento extends Model
                 Constancia::create([
                     'user_id' => $juez->id,
                     'evento_id' => $this->id,
+                    'equipo_id' => null, // Los jueces no tienen equipo
                     'tipo' => 'juez',
                     'descripcion' => 'Reconocimiento por participar como juez evaluador en ' . $this->nombre,
                 ]);

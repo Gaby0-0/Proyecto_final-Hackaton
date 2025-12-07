@@ -16,9 +16,11 @@ class ProyectoController extends Controller
     {
         $user = Auth::user();
 
-        // Obtener equipos del usuario con sus eventos inscritos
+        // Obtener equipos del usuario con sus eventos activos en los que están participando
         $equipos = $user->equipos()->with(['eventos' => function ($query) {
-            $query->whereIn('equipo_evento.estado', ['inscrito', 'participando', 'finalizado'])
+            // Solo eventos activos y donde el equipo esté participando
+            $query->where('eventos.estado', 'activo')
+                  ->whereIn('equipo_evento.estado', ['inscrito', 'participando'])
                   ->withPivot([
                       'estado',
                       'proyecto_titulo',
@@ -28,7 +30,10 @@ class ProyectoController extends Controller
                       'fecha_entrega_final',
                       'notas_equipo'
                   ]);
-        }])->get();
+        }])->get()->filter(function($equipo) {
+            // Filtrar solo equipos que tengan al menos un evento activo
+            return $equipo->eventos->count() > 0;
+        });
 
         return view('estudiante.proyectos.index', compact('equipos'));
     }

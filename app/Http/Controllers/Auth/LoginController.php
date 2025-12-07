@@ -42,7 +42,7 @@ class LoginController extends Controller
             $user = Auth::user();
 
             // Redirección según el rol del usuario
-            if ($user->admin == 1 || $user->role === 'admin') {
+            if ($user->role === 'admin') {
                 return redirect()->intended('/admin');
             } elseif ($user->role === 'juez') {
                 return redirect()->intended('/juez');

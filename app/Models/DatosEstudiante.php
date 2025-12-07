@@ -10,9 +10,6 @@ class DatosEstudiante extends Model
 
     protected $fillable = [
         'user_id',
-        'nombre_completo',
-        'apellido_paterno',
-        'apellido_materno',
         'numero_control',
         'carrera',
         'semestre',
@@ -31,5 +28,11 @@ class DatosEstudiante extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    // Obtener nombre completo desde el user
+    public function getNombreCompletoAttribute()
+    {
+        return $this->user->name ?? '';
     }
 }

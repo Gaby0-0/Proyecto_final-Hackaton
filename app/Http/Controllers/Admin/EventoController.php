@@ -244,13 +244,17 @@ class EventoController extends Controller
         // Obtener equipos con sus promedios de evaluación
         $equiposConPromedios = $evento->equiposConPromedios();
 
-        // Determinar ganador sugerido (mayor promedio)
-        $ganadorSugerido = $evento->determinarGanadorAutomatico();
+        // Determinar los 3 ganadores sugeridos
+        $ganadoresSugeridos = $evento->determinarTresGanadoresAutomatico();
 
-        // Cargar el equipo ganador si existe
-        $evento->load('equipoGanador.miembros');
+        // Cargar los equipos ganadores si existen
+        $evento->load([
+            'equipoPrimerLugar.miembros',
+            'equipoSegundoLugar.miembros',
+            'equipoTercerLugar.miembros'
+        ]);
 
-        return view('admin.eventos.seleccionar-ganador', compact('evento', 'equiposConPromedios', 'ganadorSugerido'));
+        return view('admin.eventos.seleccionar-ganador', compact('evento', 'equiposConPromedios', 'ganadoresSugeridos'));
     }
 
     // Establecer equipo ganador
@@ -281,24 +285,38 @@ class EventoController extends Controller
     // Establecer ganador automáticamente (mayor promedio)
     public function establecerGanadorAutomatico(Evento $evento)
     {
-        $ganador = $evento->establecerGanadorAutomatico();
+        $ganadores = $evento->establecerGanadorAutomatico();
 
-        if ($ganador) {
-            return back()->with('success', 'Equipo ganador establecido automáticamente: ' . $ganador->nombre . ' con promedio de ' . number_format($ganador->promedio_evaluacion, 2));
+        if ($ganadores && $ganadores->isNotEmpty()) {
+            $mensaje = '3 ganadores establecidos automáticamente:<br>';
+
+            if ($ganadores->count() >= 1) {
+                $mensaje .= '🥇 1er lugar: ' . $ganadores->get(0)->nombre . ' (Promedio: ' . number_format($ganadores->get(0)->promedio_evaluacion, 2) . ')<br>';
+            }
+            if ($ganadores->count() >= 2) {
+                $mensaje .= '🥈 2do lugar: ' . $ganadores->get(1)->nombre . ' (Promedio: ' . number_format($ganadores->get(1)->promedio_evaluacion, 2) . ')<br>';
+            }
+            if ($ganadores->count() >= 3) {
+                $mensaje .= '🥉 3er lugar: ' . $ganadores->get(2)->nombre . ' (Promedio: ' . number_format($ganadores->get(2)->promedio_evaluacion, 2) . ')';
+            }
+
+            return back()->with('success', $mensaje);
         }
 
-        return back()->with('error', 'No se pudo determinar un ganador. Asegúrate de que haya equipos evaluados.');
+        return back()->with('error', 'No se pudo determinar ganadores. Asegúrate de que haya al menos 3 equipos evaluados.');
     }
 
     // Quitar equipo ganador
     public function quitarGanador(Evento $evento)
     {
         $evento->update([
-            'equipo_ganador_id' => null,
+            'equipo_primer_lugar_id' => null,
+            'equipo_segundo_lugar_id' => null,
+            'equipo_tercer_lugar_id' => null,
             'fecha_seleccion_ganador' => null,
         ]);
 
-        return back()->with('success', 'Equipo ganador removido exitosamente');
+        return back()->with('success', 'Ganadores removidos exitosamente');
     }
 
     // Ver proyectos de equipos en un evento (para admin)

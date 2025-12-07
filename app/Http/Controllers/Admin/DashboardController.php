@@ -125,8 +125,9 @@ class DashboardController extends Controller
     private function obtenerUsuariosPorRol()
     {
         return [
-            'administradores' => User::where('admin', 1)->count(),
-            'usuarios' => User::where('admin', 0)->count(),
+            'administradores' => User::where('role', 'admin')->count(),
+            'usuarios' => User::where('role', 'estudiante')->count(),
+            'jueces' => User::where('role', 'juez')->count(),
             'total' => User::count()
         ];
     }

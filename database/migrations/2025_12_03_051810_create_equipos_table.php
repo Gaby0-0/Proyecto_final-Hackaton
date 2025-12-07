@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('role')->default('estudiante')->after('password');
-            // role puede ser: admin, juez, estudiante
+        Schema::create('equipos', function (Blueprint $table) {
+            $table->id();
+            $table->string('nombre');
+            $table->string('codigo')->unique();
+            $table->foreignId('proyecto_id')->nullable()->constrained('proyectos')->onDelete('set null');
+            $table->timestamps();
         });
     }
 
@@ -22,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('role');
-        });
+        Schema::dropIfExists('equipos');
     }
 };

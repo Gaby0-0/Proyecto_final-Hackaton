@@ -1,11 +1,11 @@
 @extends('layouts.estudiante')
 
-@section('title', 'Eventos Disponibles')
+@section('title', 'Eventos')
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Eventos Disponibles</h1>
+        <h1 class="text-3xl font-bold text-gray-900">Eventos del Hackaton</h1>
     </div>
 
     @if(session('success'))
@@ -37,56 +37,52 @@
         </div>
     @endif
 
-    <!-- Mis Equipos e Inscripciones -->
-    @if($misEquipos->count() > 0)
+    <!-- Eventos en Curso en los que Estoy Inscrito -->
+    @if($eventosInscritos->count() > 0)
         <div class="mb-8">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Mis Equipos e Inscripciones</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($misEquipos as $equipo)
-                    <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-lg font-bold text-gray-900">{{ $equipo->nombre }}</h3>
-                            @php
-                                $esLider = $equipo->miembros->where('id', auth()->id())->first()->pivot->rol_equipo == 'lider';
-                            @endphp
-                            @if($esLider)
-                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                                    <i class="fas fa-crown"></i> Líder
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-running text-blue-600 mr-2"></i>
+                Mis Eventos en Curso
+            </h2>
+            <p class="text-gray-600 mb-4 text-sm">Eventos que se están realizando actualmente y en los que estás participando</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach($eventosInscritos as $evento)
+                    <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden border-l-4 border-green-500">
+                        <!-- Header del evento -->
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 p-4 text-white">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-bold">{{ $evento->nombre }}</h3>
+                                @php
+                                    $estadoBadge = match($evento->estado_inscripcion) {
+                                        'pendiente' => 'bg-yellow-400 text-yellow-900',
+                                        'inscrito' => 'bg-green-200 text-green-900',
+                                        'participando' => 'bg-blue-200 text-blue-900',
+                                        default => 'bg-gray-200 text-gray-900'
+                                    };
+                                    $estadoTexto = match($evento->estado_inscripcion) {
+                                        'pendiente' => 'Pendiente',
+                                        'inscrito' => 'Inscrito',
+                                        'participando' => 'Participando',
+                                        default => 'Estado desconocido'
+                                    };
+                                @endphp
+                                <span class="text-xs px-2 py-1 rounded-full {{ $estadoBadge }}">
+                                    {{ $estadoTexto }}
                                 </span>
-                            @endif
+                            </div>
                         </div>
 
-                        @if($equipo->eventos->count() > 0)
-                            <div class="mt-3 space-y-2">
-                                <p class="text-sm font-semibold text-gray-700">Inscripciones:</p>
-                                @foreach($equipo->eventos as $evento)
-                                    @php
-                                        $estadoBadge = match($evento->pivot->estado) {
-                                            'pendiente' => 'bg-yellow-100 text-yellow-800',
-                                            'inscrito' => 'bg-green-100 text-green-800',
-                                            'participando' => 'bg-blue-100 text-blue-800',
-                                            'finalizado' => 'bg-gray-100 text-gray-800',
-                                            default => 'bg-gray-100 text-gray-800'
-                                        };
-                                        $estadoTexto = match($evento->pivot->estado) {
-                                            'pendiente' => 'Pendiente',
-                                            'inscrito' => 'Inscrito',
-                                            'participando' => 'Participando',
-                                            'finalizado' => 'Finalizado',
-                                            default => 'Desconocido'
-                                        };
-                                    @endphp
-                                    <div class="flex items-center justify-between text-sm">
-                                        <span class="text-gray-600">{{ Str::limit($evento->nombre, 30) }}</span>
-                                        <span class="text-xs px-2 py-1 rounded-full {{ $estadoBadge }}">
-                                            {{ $estadoTexto }}
-                                        </span>
-                                    </div>
-                                @endforeach
+                        <!-- Contenido -->
+                        <div class="p-4">
+                            <div class="mb-3">
+                                <p class="text-sm text-gray-600 mb-1"><i class="fas fa-users text-blue-500 mr-2"></i><strong>Equipo:</strong> {{ $evento->equipo_inscrito->nombre }}</p>
+                                <p class="text-sm text-gray-600"><i class="fas fa-calendar text-blue-500 mr-2"></i><strong>Inicio:</strong> {{ \Carbon\Carbon::parse($evento->fecha_inicio)->format('d/m/Y') }}</p>
                             </div>
-                        @else
-                            <p class="text-sm text-gray-500 mt-3">Sin inscripciones aún</p>
-                        @endif
+
+                            <a href="{{ route('estudiante.eventos.show', $evento) }}" class="block w-full bg-green-600 hover:bg-green-700 text-white text-center px-4 py-2 rounded-lg font-medium transition-colors">
+                                Ver Detalles
+                            </a>
+                        </div>
                     </div>
                 @endforeach
             </div>
@@ -95,7 +91,11 @@
 
     <!-- Lista de Eventos Disponibles -->
     <div>
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Todos los Eventos</h2>
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-calendar-plus text-green-600 mr-2"></i>
+            Eventos Abiertos a Inscripciones
+        </h2>
+        <p class="text-gray-600 mb-4 text-sm">Eventos que están abiertos para inscripciones y tienen cupo disponible</p>
         @if($eventosDisponibles->count() > 0)
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($eventosDisponibles as $evento)

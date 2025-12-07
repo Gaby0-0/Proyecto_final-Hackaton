@@ -22,14 +22,18 @@ class EstudianteMiddleware
         $user = $request->user();
 
         // Verificar que sea estudiante o usuario regular (no admin ni juez)
-        if ($user->admin == 1 || $user->role === 'admin' || $user->role === 'juez') {
+        if ($user->role === 'admin' || $user->role === 'juez') {
             abort(403, 'No tienes permisos para acceder a esta área.');
         }
 
         // Headers anti-caché
-        return $next($request)
-            ->header('Cache-Control','no-cache, no-store, max-age=0, must-revalidate')
-            ->header('Pragma','no-cache')
-            ->header('Expires','Sat, 01 Jan 1990 00:00:00 GMT');
+         $response = $next($request);
+
+            // Agregar headers sin usar ->header()
+            $response->headers->set('Cache-Control','no-cache, no-store, max-age=0, must-revalidate');
+            $response->headers->set('Pragma','no-cache');
+            $response->headers->set('Expires','Sat, 01 Jan 1990 00:00:00 GMT');
+
+            return $response;
     }
 }

@@ -13,6 +13,8 @@ class Constancia extends Model
         'equipo_id',
         'evento_id',
         'tipo',
+        'lugar',
+        'proyecto_nombre',
         'numero_folio',
         'archivo_url',
         'fecha_emision',

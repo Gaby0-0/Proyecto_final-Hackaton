@@ -15,26 +15,41 @@ class EventoController extends Controller
     {
         $user = Auth::user();
 
-        // Obtener todos los eventos activos, disponibles y con cupo
-        $eventosDisponibles = Evento::where('estado', 'activo')
-            ->where('fecha_inicio', '<=', now())
-            ->where('fecha_fin', '>=', now())
+        // Obtener todos los eventos activos que no hayan alcanzado el límite
+        $eventosDisponibles = Evento::where('eventos.estado', 'activo')
             ->withCount('equiposAprobados')
             ->get()
             ->filter(function($evento) {
-                return $evento->tieneCupoDisponible();
+                // Filtrar solo los que tienen cupo disponible
+                $equiposInscritos = $evento->equipos()
+                    ->whereIn('equipo_evento.estado', ['inscrito', 'participando'])
+                    ->count();
+                return $equiposInscritos < $evento->max_equipos;
             })
             ->sortBy('fecha_inicio')
             ->values();
 
-        // Obtener los equipos del usuario con sus eventos inscritos
-        $misEquipos = $user->equipos()
-            ->with(['eventos' => function ($query) {
-                $query->whereIn('equipo_evento.estado', ['pendiente', 'inscrito', 'participando']);
-            }])
-            ->get();
+        // Obtener eventos en los que el usuario está inscrito (con sus equipos)
+        $misEquipos = $user->equipos()->get();
 
-        return view('estudiante.eventos.index', compact('eventosDisponibles', 'misEquipos'));
+        $eventosInscritos = collect();
+        foreach ($misEquipos as $equipo) {
+            $eventos = $equipo->eventos()
+                ->whereIn('equipo_evento.estado', ['pendiente', 'inscrito', 'participando'])
+                ->where('eventos.estado', 'activo')
+                ->with('equipos')
+                ->get();
+
+            foreach ($eventos as $evento) {
+                $evento->equipo_inscrito = $equipo;
+                $evento->estado_inscripcion = $evento->pivot->estado;
+                $eventosInscritos->push($evento);
+            }
+        }
+
+        $eventosInscritos = $eventosInscritos->unique('id');
+
+        return view('estudiante.eventos.index', compact('eventosDisponibles', 'eventosInscritos', 'misEquipos'));
     }
 
     // Mostrar detalles de un evento

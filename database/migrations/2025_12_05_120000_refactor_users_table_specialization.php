@@ -37,17 +37,7 @@ return new class extends Migration
         });
 
         // Actualizar tabla datos_estudiante
-        Schema::table('datos_estudiante', function (Blueprint $table) {
-            if (!Schema::hasColumn('datos_estudiante', 'nombre_completo')) {
-                $table->string('nombre_completo')->after('user_id');
-            }
-            if (!Schema::hasColumn('datos_estudiante', 'apellido_paterno')) {
-                $table->string('apellido_paterno')->nullable()->after('nombre_completo');
-            }
-            if (!Schema::hasColumn('datos_estudiante', 'apellido_materno')) {
-                $table->string('apellido_materno')->nullable()->after('apellido_paterno');
-            }
-        });
+        // No se agrega nombre_completo porque se usa el campo 'name' de la tabla users
 
         // 2. Limpiar tabla users - eliminar campos específicos que ahora están en tablas especializadas
         Schema::table('users', function (Blueprint $table) {
@@ -88,10 +78,6 @@ return new class extends Migration
             }
         });
 
-        Schema::table('datos_estudiante', function (Blueprint $table) {
-            if (Schema::hasColumn('datos_estudiante', 'nombre_completo')) {
-                $table->dropColumn(['nombre_completo', 'apellido_paterno', 'apellido_materno']);
-            }
-        });
+        // No hay nombre_completo que eliminar en datos_estudiante
     }
 };
