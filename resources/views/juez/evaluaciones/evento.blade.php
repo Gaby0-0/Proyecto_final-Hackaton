@@ -119,7 +119,7 @@
                             <!-- Enlaces -->
                             @if($equipo->pivot->proyecto_final_url)
                                 <div class="mb-4">
-                                    <a href="{{ $equipo->pivot->proyecto_final_url }}"
+                                    <a href="{{ Storage::url($equipo->pivot->proyecto_final_url) }}"
                                        target="_blank"
                                        class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
                                         <i class="fas fa-link mr-1"></i>

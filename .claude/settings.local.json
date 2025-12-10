@@ -17,7 +17,11 @@
       "Bash(if not exist \"resources\\views\\admin\\informes\" mkdir \"resources\\views\\admin\\informes\")",
       "Bash(if not exist \"resources\\views\\estudiante\\evaluaciones\" mkdir \"resources\\views\\estudiante\\evaluaciones\")",
       "Bash(php reset_database.php:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(if not exist \"resources\\views\\admin\\perfil\" mkdir \"resources\\views\\admin\\perfil\")",
+      "Bash(vendor/bin/pint:*)",
+      "Bash(composer require:*)",
+      "Bash(php -r:*)"
     ],
     "deny": [],
     "ask": []

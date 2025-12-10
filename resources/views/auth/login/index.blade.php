@@ -48,6 +48,10 @@
                 Ingresar al Sistema
             </button>
         </form>
+
+        <div class="register-link">
+            <p>¿No tienes una cuenta? <a href="{{ route('registro') }}">Regístrate aquí</a></p>
+        </div>
     </div>
 
     <script>

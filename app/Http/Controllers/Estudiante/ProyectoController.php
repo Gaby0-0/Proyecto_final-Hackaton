@@ -16,22 +16,19 @@ class ProyectoController extends Controller
     {
         $user = Auth::user();
 
-        // Obtener equipos del usuario con sus eventos activos en los que están participando
         $equipos = $user->equipos()->with(['eventos' => function ($query) {
-            // Solo eventos activos y donde el equipo esté participando
             $query->where('eventos.estado', 'activo')
-                  ->whereIn('equipo_evento.estado', ['inscrito', 'participando'])
-                  ->withPivot([
-                      'estado',
-                      'proyecto_titulo',
-                      'proyecto_descripcion',
-                      'avances',
-                      'proyecto_final_url',
-                      'fecha_entrega_final',
-                      'notas_equipo'
-                  ]);
-        }])->get()->filter(function($equipo) {
-            // Filtrar solo equipos que tengan al menos un evento activo
+                ->whereIn('equipo_evento.estado', ['inscrito', 'participando'])
+                ->withPivot([
+                    'estado',
+                    'proyecto_titulo',
+                    'proyecto_descripcion',
+                    'avances',
+                    'proyecto_final_url',
+                    'fecha_entrega_final',
+                    'notas_equipo',
+                ]);
+        }])->get()->filter(function ($equipo) {
             return $equipo->eventos->count() > 0;
         });
 
@@ -44,7 +41,7 @@ class ProyectoController extends Controller
         $user = Auth::user();
 
         // Verificar que el usuario es miembro del equipo
-        if (!$equipo->miembros()->where('user_id', $user->id)->exists()) {
+        if (! $equipo->miembros()->where('user_id', $user->id)->exists()) {
             return redirect()->route('estudiante.proyectos.index')
                 ->with('error', 'No tienes acceso a este proyecto');
         }
@@ -60,11 +57,11 @@ class ProyectoController extends Controller
                 'avances',
                 'proyecto_final_url',
                 'fecha_entrega_final',
-                'notas_equipo'
+                'notas_equipo',
             ])
             ->first();
 
-        if (!$inscripcion) {
+        if (! $inscripcion) {
             return redirect()->route('estudiante.proyectos.index')
                 ->with('error', 'El equipo no está inscrito en este evento');
         }
@@ -87,13 +84,13 @@ class ProyectoController extends Controller
         $user = Auth::user();
 
         // Verificar que el usuario es líder del equipo
-        if (!$equipo->usuarioEsLider($user->id)) {
+        if (! $equipo->usuarioEsLider($user->id)) {
             return redirect()->back()
                 ->with('error', 'Solo el líder del equipo puede actualizar la información del proyecto');
         }
 
         // Verificar que el equipo está inscrito en el evento
-        if (!$equipo->eventos()->where('evento_id', $evento->id)->exists()) {
+        if (! $equipo->eventos()->where('evento_id', $evento->id)->exists()) {
             return redirect()->route('estudiante.proyectos.index')
                 ->with('error', 'El equipo no está inscrito en este evento');
         }
@@ -101,14 +98,14 @@ class ProyectoController extends Controller
         $validated = $request->validate([
             'proyecto_titulo' => 'required|string|max:255',
             'proyecto_descripcion' => 'required|string',
-            'notas_equipo' => 'nullable|string'
+            'notas_equipo' => 'nullable|string',
         ]);
 
         // Actualizar la información en la tabla pivot
         $equipo->eventos()->updateExistingPivot($evento->id, [
             'proyecto_titulo' => $validated['proyecto_titulo'],
             'proyecto_descripcion' => $validated['proyecto_descripcion'],
-            'notas_equipo' => $validated['notas_equipo'] ?? null
+            'notas_equipo' => $validated['notas_equipo'] ?? null,
         ]);
 
         return redirect()->back()
@@ -120,47 +117,73 @@ class ProyectoController extends Controller
     {
         $user = Auth::user();
 
-        // Verificar que el usuario es líder del equipo
-        if (!$equipo->usuarioEsLider($user->id)) {
-            return redirect()->back()
-                ->with('error', 'Solo el líder del equipo puede subir avances');
+        if (! $equipo->miembros()->where('user_id', $user->id)->exists()) {
+            return redirect()->back()->with('error', 'No eres miembro de este equipo');
         }
 
-        $validated = $request->validate([
-            'descripcion' => 'required|string|max:255',
-            'archivo' => 'required|file|max:51200|mimes:pdf,doc,docx,zip,rar,pptx,mp4,avi'
-        ]);
+        if (! $equipo->usuarioEsLider($user->id)) {
+            return redirect()->back()->with('error', 'Solo el líder del equipo puede subir avances');
+        }
 
-        // Guardar archivo
-        $path = $request->file('archivo')->store('avances', 'public');
-
-        // Obtener avances actuales
         $inscripcion = $equipo->eventos()
             ->where('evento_id', $evento->id)
-            ->withPivot('avances')
+            ->whereIn('equipo_evento.estado', ['inscrito', 'participando', 'finalizado'])
             ->first();
 
-        $avances = [];
-        if ($inscripcion && $inscripcion->pivot->avances) {
-            $avances = json_decode($inscripcion->pivot->avances, true) ?? [];
+        if (! $inscripcion) {
+            return redirect()->back()->with('error', 'El equipo no está inscrito en este evento');
         }
 
-        // Agregar nuevo avance
-        $avances[] = [
-            'descripcion' => $validated['descripcion'],
-            'archivo' => $path,
-            'archivo_nombre' => $request->file('archivo')->getClientOriginalName(),
-            'fecha' => now()->toDateTimeString(),
-            'usuario' => $user->name
-        ];
+        try {
+            $validated = $request->validate([
+                'descripcion' => 'required|string|max:255',
+                'archivo' => 'required|file|max:51200|mimes:pdf,doc,docx,zip,rar,pptx,mp4,avi',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput()
+                ->with('error', 'Error en la validación. Verifica que el archivo cumpla con los requisitos.');
+        }
 
-        // Actualizar en la base de datos
-        $equipo->eventos()->updateExistingPivot($evento->id, [
-            'avances' => json_encode($avances)
-        ]);
+        try {
+            if (! $request->hasFile('archivo')) {
+                throw new \Exception('No se recibió ningún archivo');
+            }
 
-        return redirect()->back()
-            ->with('success', 'Avance subido exitosamente');
+            $archivo = $request->file('archivo');
+
+            if (! $archivo->isValid()) {
+                throw new \Exception('El archivo no es válido');
+            }
+
+            $path = $archivo->store('avances', 'public');
+
+            if (! $path) {
+                throw new \Exception('No se pudo guardar el archivo');
+            }
+
+            $avances = [];
+            if ($inscripcion->pivot->avances) {
+                $avances = json_decode($inscripcion->pivot->avances, true) ?? [];
+            }
+
+            $avances[] = [
+                'descripcion' => $validated['descripcion'],
+                'archivo' => $path,
+                'archivo_nombre' => $archivo->getClientOriginalName(),
+                'fecha' => now()->toDateTimeString(),
+                'usuario' => $user->name,
+            ];
+
+            $equipo->eventos()->updateExistingPivot($evento->id, [
+                'avances' => json_encode($avances),
+            ]);
+
+            return redirect()->back()->with('success', 'Avance subido exitosamente');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error al subir el archivo: '.$e->getMessage());
+        }
     }
 
     // Eliminar avance
@@ -169,7 +192,7 @@ class ProyectoController extends Controller
         $user = Auth::user();
 
         // Verificar que el usuario es líder del equipo
-        if (!$equipo->usuarioEsLider($user->id)) {
+        if (! $equipo->usuarioEsLider($user->id)) {
             return redirect()->back()
                 ->with('error', 'Solo el líder del equipo puede eliminar avances');
         }
@@ -180,13 +203,13 @@ class ProyectoController extends Controller
             ->withPivot('avances')
             ->first();
 
-        if (!$inscripcion || !$inscripcion->pivot->avances) {
+        if (! $inscripcion || ! $inscripcion->pivot->avances) {
             return redirect()->back()->with('error', 'No se encontraron avances');
         }
 
         $avances = json_decode($inscripcion->pivot->avances, true) ?? [];
 
-        if (!isset($avances[$indice])) {
+        if (! isset($avances[$indice])) {
             return redirect()->back()->with('error', 'Avance no encontrado');
         }
 
@@ -200,7 +223,7 @@ class ProyectoController extends Controller
 
         // Actualizar en la base de datos
         $equipo->eventos()->updateExistingPivot($evento->id, [
-            'avances' => json_encode($avances)
+            'avances' => json_encode($avances),
         ]);
 
         return redirect()->back()
@@ -212,37 +235,69 @@ class ProyectoController extends Controller
     {
         $user = Auth::user();
 
-        // Verificar que el usuario es líder del equipo
-        if (!$equipo->usuarioEsLider($user->id)) {
-            return redirect()->back()
-                ->with('error', 'Solo el líder del equipo puede subir el proyecto final');
+        if (! $equipo->miembros()->where('user_id', $user->id)->exists()) {
+            return redirect()->back()->with('error', 'No eres miembro de este equipo');
         }
 
-        $validated = $request->validate([
-            'proyecto_final' => 'required|file|max:102400|mimes:pdf,doc,docx,zip,rar,pptx,mp4,avi'
-        ]);
+        if (! $equipo->usuarioEsLider($user->id)) {
+            return redirect()->back()->with('error', 'Solo el líder del equipo puede subir el proyecto final');
+        }
 
-        // Eliminar archivo anterior si existe
         $inscripcion = $equipo->eventos()
             ->where('evento_id', $evento->id)
-            ->withPivot('proyecto_final_url')
+            ->whereIn('equipo_evento.estado', ['inscrito', 'participando', 'finalizado'])
             ->first();
 
-        if ($inscripcion && $inscripcion->pivot->proyecto_final_url) {
-            Storage::disk('public')->delete($inscripcion->pivot->proyecto_final_url);
+        if (! $inscripcion) {
+            return redirect()->back()->with('error', 'El equipo no está inscrito en este evento');
         }
 
-        // Guardar nuevo archivo
-        $path = $request->file('proyecto_final')->store('proyectos_finales', 'public');
+        try {
+            $validated = $request->validate([
+                'proyecto_final' => 'required|file|max:102400|mimes:pdf,doc,docx,zip,rar,pptx,mp4,avi',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput()
+                ->with('error', 'Error en la validación del archivo. Verifica que el archivo cumpla con los requisitos.');
+        }
 
-        // Actualizar en la base de datos
-        $equipo->eventos()->updateExistingPivot($evento->id, [
-            'proyecto_final_url' => $path,
-            'fecha_entrega_final' => now()
-        ]);
+        try {
+            if (! $request->hasFile('proyecto_final')) {
+                throw new \Exception('No se recibió ningún archivo');
+            }
 
-        return redirect()->back()
-            ->with('success', 'Proyecto final subido exitosamente');
+            $archivo = $request->file('proyecto_final');
+
+            if (! $archivo->isValid()) {
+                throw new \Exception('El archivo no es válido');
+            }
+
+            $inscripcionAnterior = $equipo->eventos()
+                ->where('evento_id', $evento->id)
+                ->withPivot('proyecto_final_url')
+                ->first();
+
+            if ($inscripcionAnterior && $inscripcionAnterior->pivot->proyecto_final_url) {
+                Storage::disk('public')->delete($inscripcionAnterior->pivot->proyecto_final_url);
+            }
+
+            $path = $archivo->store('proyectos_finales', 'public');
+
+            if (! $path) {
+                throw new \Exception('No se pudo guardar el archivo');
+            }
+
+            $equipo->eventos()->updateExistingPivot($evento->id, [
+                'proyecto_final_url' => $path,
+                'fecha_entrega_final' => now(),
+            ]);
+
+            return redirect()->back()->with('success', 'Proyecto final subido exitosamente');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error al subir el archivo: '.$e->getMessage());
+        }
     }
 
     // Eliminar proyecto final
@@ -251,7 +306,7 @@ class ProyectoController extends Controller
         $user = Auth::user();
 
         // Verificar que el usuario es líder del equipo
-        if (!$equipo->usuarioEsLider($user->id)) {
+        if (! $equipo->usuarioEsLider($user->id)) {
             return redirect()->back()
                 ->with('error', 'Solo el líder del equipo puede eliminar el proyecto final');
         }
@@ -262,7 +317,7 @@ class ProyectoController extends Controller
             ->withPivot('proyecto_final_url')
             ->first();
 
-        if (!$inscripcion || !$inscripcion->pivot->proyecto_final_url) {
+        if (! $inscripcion || ! $inscripcion->pivot->proyecto_final_url) {
             return redirect()->back()->with('error', 'No hay proyecto final para eliminar');
         }
 
@@ -272,7 +327,7 @@ class ProyectoController extends Controller
         // Actualizar en la base de datos
         $equipo->eventos()->updateExistingPivot($evento->id, [
             'proyecto_final_url' => null,
-            'fecha_entrega_final' => null
+            'fecha_entrega_final' => null,
         ]);
 
         return redirect()->back()

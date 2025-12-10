@@ -327,8 +327,12 @@
                 <input type="text"
                        name="descripcion"
                        required
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       value="{{ old('descripcion') }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('descripcion') border-red-500 @enderror"
                        placeholder="Ej: Primera versión del diseño">
+                @error('descripcion')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -338,8 +342,11 @@
                        name="archivo"
                        required
                        accept=".pdf,.doc,.docx,.zip,.rar,.pptx,.mp4,.avi"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('archivo') border-red-500 @enderror">
                 <p class="text-xs text-gray-500 mt-1">Máx. 50MB. Formatos: PDF, DOC, DOCX, ZIP, RAR, PPTX, MP4, AVI</p>
+                @error('archivo')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
             <div class="flex justify-end gap-3">
                 <button type="button"
@@ -387,8 +394,11 @@
                        name="proyecto_final"
                        required
                        accept=".pdf,.doc,.docx,.zip,.rar,.pptx,.mp4,.avi"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('proyecto_final') border-red-500 @enderror">
                 <p class="text-xs text-gray-500 mt-1">Máx. 100MB. Formatos: PDF, DOC, DOCX, ZIP, RAR, PPTX, MP4, AVI</p>
+                @error('proyecto_final')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
             <div class="flex justify-end gap-3">
                 <button type="button"

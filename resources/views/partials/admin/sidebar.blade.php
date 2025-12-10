@@ -106,14 +106,6 @@
                 </ul>
             </li>
 
-            <!-- Configuración -->
-            <li class="mt-auto">
-                <a href="{{ route('admin.configuracion.index') }}"
-                   class="group flex gap-x-3 rounded-lg p-3 text-sm font-semibold leading-6 {{ request()->routeIs('admin.configuracion.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50' }}">
-                    <i class="fas fa-cog w-5 {{ request()->routeIs('admin.configuracion.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600' }}"></i>
-                    Configuración
-                </a>
-            </li>
         </ul>
     </nav>
 </div>

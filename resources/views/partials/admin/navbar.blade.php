@@ -22,13 +22,25 @@
 
         <div class="flex items-center gap-x-4 lg:gap-x-6">
             <!-- Notificaciones -->
+            @php
+                $notificaciones = \App\Models\Notificacion::with(['equipo', 'evento'])
+                    ->orderBy('created_at', 'desc')
+                    ->limit(10)
+                    ->get();
+                $notificacionesNoLeidas = $notificaciones->where('leida', false)->count();
+            @endphp
+
             <div x-data="{ open: false }" class="relative">
                 <button type="button"
                         @click="open = !open"
                         class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500 relative">
                     <span class="sr-only">Ver notificaciones</span>
                     <i class="fas fa-bell text-xl"></i>
-                    <span class="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+                    @if($notificacionesNoLeidas > 0)
+                        <span class="absolute top-1 right-1 flex items-center justify-center h-5 w-5 rounded-full bg-red-500 ring-2 ring-white">
+                            <span class="text-xs font-bold text-white">{{ $notificacionesNoLeidas }}</span>
+                        </span>
+                    @endif
                 </button>
 
                 <!-- Dropdown notificaciones -->
@@ -41,18 +53,37 @@
                         <h3 class="text-sm font-semibold text-gray-900">Notificaciones</h3>
                     </div>
                     <div class="max-h-96 overflow-y-auto">
-                        <a href="#" class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100">
-                            <p class="text-sm text-gray-900">Nuevo equipo registrado</p>
-                            <p class="text-xs text-gray-500 mt-1">Hace 2 horas</p>
-                        </a>
-                        <a href="#" class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100">
-                            <p class="text-sm text-gray-900">Evaluación completada</p>
-                            <p class="text-xs text-gray-500 mt-1">Hace 4 horas</p>
-                        </a>
+                        @forelse($notificaciones as $notificacion)
+                            <a href="{{ route('admin.notificaciones.marcar-leida', $notificacion) }}"
+                               class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100 {{ $notificacion->leida ? 'bg-white' : 'bg-blue-50' }}">
+                                <div class="flex items-start gap-2">
+                                    <i class="fas fa-circle text-xs mt-1 {{ $notificacion->leida ? 'text-gray-300' : 'text-blue-500' }}"></i>
+                                    <div class="flex-1">
+                                        <p class="text-sm {{ $notificacion->leida ? 'text-gray-700' : 'text-gray-900 font-medium' }}">
+                                            {{ $notificacion->mensaje }}
+                                        </p>
+                                        <p class="text-xs text-gray-500 mt-1">{{ $notificacion->created_at->diffForHumans() }}</p>
+                                    </div>
+                                </div>
+                            </a>
+                        @empty
+                            <div class="px-4 py-8 text-center">
+                                <i class="fas fa-bell-slash text-4xl text-gray-300 mb-2"></i>
+                                <p class="text-sm text-gray-500">No hay notificaciones</p>
+                            </div>
+                        @endforelse
                     </div>
+                    @if($notificacionesNoLeidas > 0)
                     <div class="px-4 py-2 border-t border-gray-200">
-                        <a href="#" class="text-xs text-blue-600 hover:text-blue-700 font-medium">Ver todas</a>
+                        <form action="{{ route('admin.notificaciones.marcar-todas-leidas') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="text-xs text-blue-600 hover:text-blue-700 font-medium w-full text-left">
+                                <i class="fas fa-check-double mr-1"></i>
+                                Marcar todas como leídas
+                            </button>
+                        </form>
                     </div>
+                    @endif
                 </div>
             </div>
 
@@ -88,13 +119,9 @@
                         <p class="text-sm font-medium text-gray-900">{{ auth()->user()->name ?? 'Admin' }}</p>
                         <p class="text-xs text-gray-500 truncate">{{ auth()->user()->email ?? 'admin@admin.com' }}</p>
                     </div>
-                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                    <a href="{{ route('admin.perfil.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                         <i class="fas fa-user w-5 text-gray-400"></i>
                         Tu perfil
-                    </a>
-                    <a href="{{ route('admin.configuracion.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                        <i class="fas fa-cog w-5 text-gray-400"></i>
-                        Configuración
                     </a>
                     <div class="border-t border-gray-200 my-1"></div>
                     <form method="POST" action="{{ route('logout') }}">

@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Evento;
-use App\Models\Equipo;
-use App\Models\User;
-use App\Models\Evaluacion;
+use App\Mail\InformeGeneralMail;
 use App\Models\Constancia;
+use App\Models\Equipo;
+use App\Models\Evaluacion;
+use App\Models\Evento;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class InformeController extends Controller
 {
@@ -18,15 +21,15 @@ class InformeController extends Controller
     {
         // Estadísticas generales
         $totalEventos = Evento::count();
-        $eventosActivos = Evento::where('activo', true)->count();
-        $eventosFinalizados = Evento::where('activo', false)->count();
+        $eventosActivos = Evento::where('estado', 'activo')->count();
+        $eventosFinalizados = Evento::where('estado', 'finalizado')->count();
 
         $totalEquipos = Equipo::count();
-        $equiposActivos = Equipo::where('activo', true)->count();
+        $equiposActivos = Equipo::count(); // Todos los equipos están activos por defecto
 
-        $totalEstudiantes = User::where('rol', 'estudiante')->count();
-        $totalJueces = User::where('rol', 'juez')->count();
-        $totalAdmins = User::where('rol', 'admin')->count();
+        $totalEstudiantes = User::where('role', 'estudiante')->count();
+        $totalJueces = User::where('role', 'juez')->count();
+        $totalAdmins = User::where('role', 'admin')->count();
 
         $totalEvaluaciones = Evaluacion::count();
         $promedioEvaluacionesGeneral = Evaluacion::avg('puntuacion');
@@ -34,6 +37,7 @@ class InformeController extends Controller
         $totalConstancias = Constancia::count();
         $constanciasGanadores = Constancia::where('tipo', 'ganador')->count();
         $constanciasParticipantes = Constancia::where('tipo', 'participante')->count();
+        $constanciasJueces = Constancia::where('tipo', 'juez')->count();
 
         // Eventos próximos
         $eventosProximos = Evento::where('fecha_inicio', '>', now())
@@ -53,13 +57,14 @@ class InformeController extends Controller
             ->orderBy('evaluaciones_count', 'desc')
             ->limit(10)
             ->get()
-            ->map(function($equipo) {
+            ->map(function ($equipo) {
                 $equipo->promedio_evaluaciones = $equipo->evaluaciones()->avg('puntuacion');
+
                 return $equipo;
             });
 
         // Jueces más activos
-        $juecesActivos = User::where('rol', 'juez')
+        $juecesActivos = User::where('role', 'juez')
             ->withCount('evaluacionesRealizadas')
             ->having('evaluaciones_realizadas_count', '>', 0)
             ->orderBy('evaluaciones_realizadas_count', 'desc')
@@ -83,6 +88,7 @@ class InformeController extends Controller
             'totalConstancias',
             'constanciasGanadores',
             'constanciasParticipantes',
+            'constanciasJueces',
             'eventosProximos',
             'eventosRecientes',
             'topEquipos',
@@ -104,7 +110,7 @@ class InformeController extends Controller
             $evento->total_participantes = $evento->equipos()
                 ->with('miembros')
                 ->get()
-                ->sum(function($equipo) {
+                ->sum(function ($equipo) {
                     return $equipo->miembros->count();
                 });
         }
@@ -134,7 +140,7 @@ class InformeController extends Controller
         $evaluacionesPorEvento = Evento::withCount('evaluaciones')
             ->having('evaluaciones_count', '>', 0)
             ->get()
-            ->map(function($evento) {
+            ->map(function ($evento) {
                 return [
                     'evento' => $evento,
                     'total' => $evento->evaluaciones_count,
@@ -144,11 +150,11 @@ class InformeController extends Controller
                 ];
             });
 
-        $evaluacionesPorJuez = User::where('rol', 'juez')
+        $evaluacionesPorJuez = User::where('role', 'juez')
             ->withCount('evaluacionesRealizadas')
             ->having('evaluaciones_realizadas_count', '>', 0)
             ->get()
-            ->map(function($juez) {
+            ->map(function ($juez) {
                 return [
                     'juez' => $juez,
                     'total' => $juez->evaluaciones_realizadas_count,
@@ -177,7 +183,7 @@ class InformeController extends Controller
         $constanciasPorEvento = Evento::withCount('constancias')
             ->having('constancias_count', '>', 0)
             ->get()
-            ->map(function($evento) {
+            ->map(function ($evento) {
                 return [
                     'evento' => $evento,
                     'total' => $evento->constancias_count,
@@ -207,11 +213,11 @@ class InformeController extends Controller
     {
         $participacionPorEvento = Evento::withCount(['equipos'])
             ->get()
-            ->map(function($evento) {
+            ->map(function ($evento) {
                 $totalParticipantes = $evento->equipos()
                     ->with('miembros')
                     ->get()
-                    ->sum(function($equipo) {
+                    ->sum(function ($equipo) {
                         return $equipo->miembros->count();
                     });
 
@@ -224,11 +230,11 @@ class InformeController extends Controller
                 ];
             });
 
-        $estudiantesActivos = User::where('rol', 'estudiante')
+        $estudiantesActivos = User::where('role', 'estudiante')
             ->whereHas('equipos')
             ->count();
 
-        $estudiantesSinEquipo = User::where('rol', 'estudiante')
+        $estudiantesSinEquipo = User::where('role', 'estudiante')
             ->whereDoesntHave('equipos')
             ->count();
 
@@ -259,5 +265,38 @@ class InformeController extends Controller
         }
 
         return $meses;
+    }
+
+    // Enviar informe general por correo
+    public function enviarInformeEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        // Recopilar datos del informe
+        $datos = [
+            'totalEventos' => Evento::count(),
+            'eventosActivos' => Evento::where('estado', 'activo')->count(),
+            'eventosFinalizados' => Evento::where('estado', 'finalizado')->count(),
+            'totalEquipos' => Equipo::count(),
+            'equiposActivos' => Equipo::count(),
+            'totalEstudiantes' => User::where('role', 'estudiante')->count(),
+            'totalJueces' => User::where('role', 'juez')->count(),
+            'totalAdmins' => User::where('role', 'admin')->count(),
+            'totalEvaluaciones' => Evaluacion::count(),
+            'promedioEvaluacionesGeneral' => round(Evaluacion::avg('puntuacion'), 2),
+            'totalConstancias' => Constancia::count(),
+            'constanciasGanadores' => Constancia::where('tipo', 'ganador')->count(),
+            'constanciasParticipantes' => Constancia::where('tipo', 'participante')->count(),
+            'constanciasJueces' => Constancia::where('tipo', 'juez')->count(),
+            'fechaGeneracion' => now()->format('d/m/Y H:i'),
+            'generadoPor' => Auth::user()->name,
+        ];
+
+        // Enviar correo
+        Mail::to($request->email)->send(new InformeGeneralMail($datos));
+
+        return back()->with('success', "Informe enviado exitosamente a {$request->email}");
     }
 }

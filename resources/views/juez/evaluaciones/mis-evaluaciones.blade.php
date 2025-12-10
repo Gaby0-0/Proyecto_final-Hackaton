@@ -120,12 +120,12 @@
 
                         <!-- Acciones -->
                         <div class="md:col-span-2 p-6 flex flex-col justify-center gap-2">
-                            <a href="{{ route('juez.evaluaciones.show', $evaluacion->equipo) }}"
+                            <a href="{{ route('juez.evaluaciones.evento', $evaluacion->evento_id) }}"
                                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium text-center transition-colors">
-                                <i class="fas fa-eye mr-1"></i>
-                                Ver Equipo
+                                <i class="fas fa-arrow-left mr-1"></i>
+                                Ver Evento
                             </a>
-                            <a href="{{ route('juez.evaluaciones.editar', $evaluacion->equipo) }}"
+                            <a href="{{ route('juez.evaluaciones.editar', ['evento' => $evaluacion->evento_id, 'equipo' => $evaluacion->equipo_id]) }}"
                                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium text-center transition-colors">
                                 <i class="fas fa-edit mr-1"></i>
                                 Editar

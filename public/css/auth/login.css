@@ -110,3 +110,27 @@
             width: 20px;
             height: 20px;
         }
+
+        .register-link {
+            margin-top: 20px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .register-link p {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .register-link a {
+            color: #0d5f6f;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .register-link a:hover {
+            color: #0a4d5a;
+            text-decoration: underline;
+        }

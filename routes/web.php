@@ -1,21 +1,23 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\UsuarioController;
-use App\Http\Controllers\Admin\EquipoController;
-use App\Http\Controllers\Admin\EventoController;
-use App\Http\Controllers\Admin\ProyectoController;
-use App\Http\Controllers\Admin\EvaluacionController;
-use App\Http\Controllers\Admin\ConstanciaController;
-use App\Http\Controllers\Admin\InformeController;
 use App\Http\Controllers\Admin\ConfiguracionController;
+use App\Http\Controllers\Admin\ConstanciaController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\EquipoController;
+use App\Http\Controllers\Admin\EvaluacionController;
+use App\Http\Controllers\Admin\EventoController;
+use App\Http\Controllers\Admin\InformeController;
 use App\Http\Controllers\Admin\JuezController;
+use App\Http\Controllers\Admin\NotificacionController;
+use App\Http\Controllers\Admin\ProyectoController;
+use App\Http\Controllers\Admin\UsuarioController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegistroController;
+use App\Http\Controllers\Estudiante\DashboardController as EstudianteDashboardController;
 use App\Http\Controllers\Juez\DashboardController as JuezDashboardController;
 use App\Http\Controllers\Juez\PerfilController as JuezPerfilController;
-use App\Http\Controllers\Estudiante\DashboardController as EstudianteDashboardController;
+use Illuminate\Support\Facades\Route;
+
 // Rutas públicas o de usuarios normales
 Route::get('/', function () {
     return view('welcome');
@@ -23,10 +25,10 @@ Route::get('/', function () {
 
 // Grupo de rutas de administración
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    
+
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    
+
     // Gestión de usuarios
     Route::resource('usuarios', UsuarioController::class);
 
@@ -71,6 +73,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('informes/evaluaciones', [InformeController::class, 'evaluaciones'])->name('informes.evaluaciones');
     Route::get('informes/constancias', [InformeController::class, 'constancias'])->name('informes.constancias');
     Route::get('informes/participacion', [InformeController::class, 'participacion'])->name('informes.participacion');
+    Route::post('informes/enviar-email', [InformeController::class, 'enviarInformeEmail'])->name('informes.enviar-email');
 
     // Configuración
     Route::get('configuracion', [ConfiguracionController::class, 'index'])->name('configuracion.index');
@@ -90,6 +93,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('perfil/editar', [\App\Http\Controllers\Admin\PerfilController::class, 'edit'])->name('perfil.edit');
     Route::put('perfil', [\App\Http\Controllers\Admin\PerfilController::class, 'update'])->name('perfil.update');
     Route::post('perfil/cambiar-password', [\App\Http\Controllers\Admin\PerfilController::class, 'cambiarPassword'])->name('perfil.cambiar-password');
+
+    // Notificaciones
+    Route::get('notificaciones/{notificacion}/leer', [NotificacionController::class, 'marcarComoLeida'])->name('notificaciones.marcar-leida');
+    Route::post('notificaciones/marcar-todas-leidas', [NotificacionController::class, 'marcarTodasComoLeidas'])->name('notificaciones.marcar-todas-leidas');
 });
 
 // Ruta para mostrar la vista de crear evento
@@ -108,7 +115,7 @@ Route::get('/', function () {
 });
 
 // Rutas para Jueces
-Route::middleware(['auth', 'juez'])->prefix('juez')->name('juez.')->group(function() {
+Route::middleware(['auth', 'juez'])->prefix('juez')->name('juez.')->group(function () {
     Route::get('/', [JuezDashboardController::class, 'index'])->name('dashboard');
 
     // Rutas de perfil
@@ -140,7 +147,7 @@ Route::middleware(['auth', 'juez'])->prefix('juez')->name('juez.')->group(functi
 });
 
 // Rutas para Estudiantes
-Route::middleware(['auth', 'estudiante'])->prefix('dashboard')->name('estudiante.')->group(function() {
+Route::middleware(['auth', 'estudiante'])->prefix('dashboard')->name('estudiante.')->group(function () {
     Route::get('/', [EstudianteDashboardController::class, 'index'])->name('dashboard');
 
     // Rutas de equipos para estudiantes
@@ -192,7 +199,7 @@ Route::post('/login', [LoginController::class, 'store'])->name('login.store');
 Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
 // Rutas del proceso de registro extendido (requieren autenticación)
-Route::middleware(['auth'])->group(function() {
+Route::middleware(['auth'])->group(function () {
     Route::get('/registro/datos-estudiante', [RegistroController::class, 'mostrarDatosEstudiante'])->name('registro.datos-estudiante');
     Route::post('/registro/datos-estudiante', [RegistroController::class, 'guardarDatosEstudiante'])->name('registro.datos-estudiante.store');
     Route::get('/registro/equipos', [RegistroController::class, 'mostrarEquipos'])->name('registro.equipos');

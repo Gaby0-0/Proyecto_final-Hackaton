@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +20,7 @@ class Evento extends Model
         'equipo_primer_lugar_id',
         'equipo_segundo_lugar_id',
         'equipo_tercer_lugar_id',
-        'fecha_seleccion_ganador'
+        'fecha_seleccion_ganador',
     ];
 
     protected $casts = [
@@ -29,67 +30,59 @@ class Evento extends Model
         'fecha_seleccion_ganador' => 'datetime',
     ];
 
-    // Relación muchos a muchos con equipos
     public function equipos()
     {
         return $this->belongsToMany(Equipo::class, 'equipo_evento')
-                    ->withPivot('estado', 'fecha_inscripcion')
-                    ->withTimestamps();
+            ->withPivot('estado', 'fecha_inscripcion')
+            ->withTimestamps();
     }
 
-    // Relación con evaluaciones
     public function evaluaciones()
     {
         return $this->hasMany(Evaluacion::class);
     }
 
-    // Obtener equipos con solicitud pendiente
     public function equiposPendientes()
     {
         return $this->equipos()->wherePivot('estado', 'pendiente');
     }
 
-    // Obtener equipos aprobados
     public function equiposAprobados()
     {
         return $this->equipos()->whereIn('equipo_evento.estado', ['inscrito', 'participando', 'finalizado']);
     }
 
-    // Verificar si hay cupo disponible
     public function tieneCupoDisponible()
     {
-        if (!$this->max_equipos) {
-            return true; // Sin límite
+        if (! $this->max_equipos) {
+            return true;
         }
+
         return $this->equiposAprobados()->count() < $this->max_equipos;
     }
 
-    // Verificar si puede aceptar más equipos
     public function puedeAceptarEquipo()
     {
-        return $this->estado === 'activo' && $this->tieneCupoDisponible();
+        return $this->estado === 'programado' && $this->tieneCupoDisponible();
     }
 
-    // Relación muchos a muchos con jueces
     public function jueces()
     {
         return $this->belongsToMany(User::class, 'evento_juez', 'evento_id', 'juez_id')
-                    ->withPivot('estado', 'fecha_asignacion')
-                    ->withTimestamps();
+            ->withPivot('estado', 'fecha_asignacion')
+            ->withTimestamps();
     }
 
-    // Verificar si el evento está activo según las fechas
     public function estaActivoPorFecha()
     {
         $ahora = now();
-        return $ahora->between($this->fecha_inicio, $this->fecha_fin);
+
+        return $ahora->gte($this->fecha_inicio) && $ahora->lt($this->fecha_fin);
     }
 
-    // Verificar si el evento está disponible para inscripción
     public function estaDisponibleParaInscripcion()
     {
-        return $this->estado === 'activo' &&
-               $this->estaActivoPorFecha() &&
+        return $this->estado === 'programado' &&
                $this->tieneCupoDisponible();
     }
 
@@ -118,15 +111,15 @@ class Evento extends Model
     // Verificar si ya tiene equipo ganador
     public function tieneGanador()
     {
-        return !is_null($this->equipo_primer_lugar_id);
+        return ! is_null($this->equipo_primer_lugar_id);
     }
 
     // Verificar si tiene todos los ganadores definidos
     public function tieneTresGanadores()
     {
-        return !is_null($this->equipo_primer_lugar_id) &&
-               !is_null($this->equipo_segundo_lugar_id) &&
-               !is_null($this->equipo_tercer_lugar_id);
+        return ! is_null($this->equipo_primer_lugar_id) &&
+               ! is_null($this->equipo_segundo_lugar_id) &&
+               ! is_null($this->equipo_tercer_lugar_id);
     }
 
     // Verificar si el evento está finalizado
@@ -135,11 +128,63 @@ class Evento extends Model
         return $this->estado === 'finalizado';
     }
 
+    public function actualizarEstadoSegunFecha()
+    {
+        $ahora = now();
+
+        if ($this->estado === 'finalizado' && $ahora->lt($this->fecha_fin)) {
+            return false;
+        }
+
+        if ($ahora->lt($this->fecha_inicio)) {
+            $nuevoEstado = 'programado';
+        } elseif ($ahora->gte($this->fecha_inicio) && $ahora->lt($this->fecha_fin)) {
+            $nuevoEstado = 'activo';
+        } else {
+            $nuevoEstado = 'finalizado';
+        }
+
+        if ($this->estado !== $nuevoEstado) {
+            $this->update(['estado' => $nuevoEstado]);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public function obtenerEstadoSegunFecha()
+    {
+        $ahora = now();
+
+        if ($ahora->lt($this->fecha_inicio)) {
+            return 'programado';
+        } elseif ($ahora->gte($this->fecha_inicio) && $ahora->lt($this->fecha_fin)) {
+            return 'activo';
+        } else {
+            return 'finalizado';
+        }
+    }
+
     // Verificar si puede generar constancias
     public function puedeGenerarConstancias()
     {
         // Solo puede generar constancias si el evento está finalizado
         return $this->estaFinalizado();
+    }
+
+    // Verificar si se pueden hacer cambios en proyectos
+    public function puedeModificarProyectos()
+    {
+        // Solo se pueden modificar proyectos si el evento NO está finalizado
+        return $this->estado !== 'finalizado';
+    }
+
+    // Verificar si se pueden subir avances
+    public function puedeSubirAvances()
+    {
+        // Solo se pueden subir avances si el evento está activo o programado (NO finalizado)
+        return $this->estado !== 'finalizado';
     }
 
     // Obtener el promedio de evaluación de un equipo en este evento
@@ -165,14 +210,14 @@ class Evento extends Model
                 'proyecto_titulo',
                 'proyecto_descripcion',
                 'proyecto_final_url',
-                'fecha_entrega_final'
+                'fecha_entrega_final',
             ])
             ->get()
-            ->filter(function($equipo) {
+            ->filter(function ($equipo) {
                 // Solo equipos con proyecto
-                return !empty($equipo->pivot->proyecto_titulo);
+                return ! empty($equipo->pivot->proyecto_titulo);
             })
-            ->map(function($equipo) {
+            ->map(function ($equipo) {
                 $promedio = $this->promedioEvaluacionEquipo($equipo->id);
                 $numEvaluaciones = Evaluacion::where('evento_id', $this->id)
                     ->where('equipo_id', $equipo->id)
@@ -201,8 +246,8 @@ class Evento extends Model
         }
 
         // Filtrar solo equipos que tengan al menos una evaluación
-        $equiposEvaluados = $equiposConPromedios->filter(function($equipo) {
-            return !is_null($equipo->promedio_evaluacion) && $equipo->num_evaluaciones > 0;
+        $equiposEvaluados = $equiposConPromedios->filter(function ($equipo) {
+            return ! is_null($equipo->promedio_evaluacion) && $equipo->num_evaluaciones > 0;
         });
 
         if ($equiposEvaluados->isEmpty()) {
@@ -223,8 +268,8 @@ class Evento extends Model
         }
 
         // Filtrar solo equipos que tengan al menos una evaluación
-        $equiposEvaluados = $equiposConPromedios->filter(function($equipo) {
-            return !is_null($equipo->promedio_evaluacion) && $equipo->num_evaluaciones > 0;
+        $equiposEvaluados = $equiposConPromedios->filter(function ($equipo) {
+            return ! is_null($equipo->promedio_evaluacion) && $equipo->num_evaluaciones > 0;
         });
 
         if ($equiposEvaluados->isEmpty()) {
@@ -264,9 +309,52 @@ class Evento extends Model
     // Generar constancias para todos los participantes (DEPRECADO - Solo ganadores y jueces)
     public function generarConstanciasParticipantes()
     {
-        // Ya no se generan constancias de participantes
-        // Solo se generan para ganadores y jueces
-        return 0;
+        // Validar que el evento esté finalizado
+        if (! $this->puedeGenerarConstancias()) {
+            throw new \Exception('No se pueden generar constancias. El evento debe estar finalizado.');
+        }
+
+        // Obtener todos los equipos aprobados del evento
+        $equiposAprobados = $this->equiposAprobados()->with('miembros')->get();
+
+        if ($equiposAprobados->isEmpty()) {
+            return 0;
+        }
+
+        $constanciasGeneradas = 0;
+
+        foreach ($equiposAprobados as $equipo) {
+            // Obtener el nombre del proyecto desde la tabla pivot
+            $inscripcion = $equipo->eventos()
+                ->where('evento_id', $this->id)
+                ->withPivot('proyecto_titulo')
+                ->first();
+
+            $proyectoNombre = $inscripcion->pivot->proyecto_titulo ?? 'Proyecto del equipo '.$equipo->nombre;
+
+            foreach ($equipo->miembros as $miembro) {
+                // Verificar si ya existe constancia de participante
+                $existe = Constancia::where('user_id', $miembro->id)
+                    ->where('evento_id', $this->id)
+                    ->where('tipo', 'participante')
+                    ->exists();
+
+                if (! $existe) {
+                    // Crear nueva constancia de participante
+                    Constancia::create([
+                        'user_id' => $miembro->id,
+                        'equipo_id' => $equipo->id,
+                        'evento_id' => $this->id,
+                        'tipo' => 'participante',
+                        'proyecto_nombre' => $proyectoNombre,
+                        'descripcion' => 'Constancia de participación en '.$this->nombre,
+                    ]);
+                    $constanciasGeneradas++;
+                }
+            }
+        }
+
+        return $constanciasGeneradas;
     }
 
     // Generar constancia para el equipo ganador (método actualizado para 3 lugares)
@@ -279,7 +367,7 @@ class Evento extends Model
     public function generarConstanciasGanadores()
     {
         // Validar que el evento esté finalizado
-        if (!$this->puedeGenerarConstancias()) {
+        if (! $this->puedeGenerarConstancias()) {
             throw new \Exception('No se pueden generar constancias. El evento debe estar finalizado.');
         }
 
@@ -293,13 +381,13 @@ class Evento extends Model
         ];
 
         foreach ($ganadores as $ganadorInfo) {
-            if (!$ganadorInfo['id']) {
+            if (! $ganadorInfo['id']) {
                 continue; // Saltar si no hay equipo para este lugar
             }
 
             $equipo = Equipo::with('miembros')->find($ganadorInfo['id']);
 
-            if (!$equipo) {
+            if (! $equipo) {
                 continue;
             }
 
@@ -309,7 +397,7 @@ class Evento extends Model
                 ->withPivot('proyecto_titulo')
                 ->first();
 
-            $proyectoNombre = $inscripcion->pivot->proyecto_titulo ?? 'Proyecto del equipo ' . $equipo->nombre;
+            $proyectoNombre = $inscripcion->pivot->proyecto_titulo ?? 'Proyecto del equipo '.$equipo->nombre;
 
             foreach ($equipo->miembros as $miembro) {
                 // Verificar si ya existe constancia de ganador para este lugar
@@ -319,7 +407,7 @@ class Evento extends Model
                     ->where('lugar', $ganadorInfo['lugar'])
                     ->exists();
 
-                if (!$existe) {
+                if (! $existe) {
                     // Crear nueva constancia de ganador
                     Constancia::create([
                         'user_id' => $miembro->id,
@@ -328,7 +416,7 @@ class Evento extends Model
                         'tipo' => 'ganador',
                         'lugar' => $ganadorInfo['lugar'],
                         'proyecto_nombre' => $proyectoNombre,
-                        'descripcion' => 'Constancia de ' . $ganadorInfo['texto'] . ' en ' . $this->nombre,
+                        'descripcion' => 'Constancia de '.$ganadorInfo['texto'].' en '.$this->nombre,
                     ]);
                     $constanciasGeneradas++;
                 }
@@ -342,7 +430,7 @@ class Evento extends Model
     public function generarConstanciasJueces()
     {
         // Validar que el evento esté finalizado
-        if (!$this->puedeGenerarConstancias()) {
+        if (! $this->puedeGenerarConstancias()) {
             throw new \Exception('No se pueden generar constancias. El evento debe estar finalizado.');
         }
 
@@ -361,13 +449,13 @@ class Evento extends Model
                 ->where('tipo', 'juez')
                 ->exists();
 
-            if (!$existe) {
+            if (! $existe) {
                 Constancia::create([
                     'user_id' => $juez->id,
                     'evento_id' => $this->id,
                     'equipo_id' => null, // Los jueces no tienen equipo
                     'tipo' => 'juez',
-                    'descripcion' => 'Reconocimiento por participar como juez evaluador en ' . $this->nombre,
+                    'descripcion' => 'Reconocimiento por participar como juez evaluador en '.$this->nombre,
                 ]);
                 $constanciasGeneradas++;
             }

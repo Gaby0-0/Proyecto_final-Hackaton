@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Estudiante;
 
 use App\Http\Controllers\Controller;
-use App\Models\Evento;
 use App\Models\Equipo;
+use App\Models\Evento;
+use App\Models\Notificacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,28 +16,26 @@ class EventoController extends Controller
     {
         $user = Auth::user();
 
-        // Obtener todos los eventos activos que no hayan alcanzado el límite
-        $eventosDisponibles = Evento::where('eventos.estado', 'activo')
+        Evento::all()->each(function ($evento) {
+            $evento->actualizarEstadoSegunFecha();
+        });
+
+        $eventosDisponibles = Evento::where('eventos.estado', 'programado')
             ->withCount('equiposAprobados')
             ->get()
-            ->filter(function($evento) {
-                // Filtrar solo los que tienen cupo disponible
-                $equiposInscritos = $evento->equipos()
-                    ->whereIn('equipo_evento.estado', ['inscrito', 'participando'])
-                    ->count();
-                return $equiposInscritos < $evento->max_equipos;
+            ->filter(function ($evento) {
+                return $evento->tieneCupoDisponible();
             })
             ->sortBy('fecha_inicio')
             ->values();
 
-        // Obtener eventos en los que el usuario está inscrito (con sus equipos)
         $misEquipos = $user->equipos()->get();
 
         $eventosInscritos = collect();
         foreach ($misEquipos as $equipo) {
             $eventos = $equipo->eventos()
                 ->whereIn('equipo_evento.estado', ['pendiente', 'inscrito', 'participando'])
-                ->where('eventos.estado', 'activo')
+                ->whereIn('eventos.estado', ['programado', 'activo'])
                 ->with('equipos')
                 ->get();
 
@@ -55,6 +54,9 @@ class EventoController extends Controller
     // Mostrar detalles de un evento
     public function show(Evento $evento)
     {
+        // Actualizar estado del evento según fecha actual
+        $evento->actualizarEstadoSegunFecha();
+
         $user = Auth::user();
 
         // Cargar relaciones del evento
@@ -66,7 +68,7 @@ class EventoController extends Controller
         // Verificar para cada equipo si puede inscribirse
         $equiposConEstado = $misEquipos->map(function ($equipo) use ($evento) {
             $yaInscrito = $equipo->estaInscritoEnEvento($evento->id);
-            $puedeInscribirse = !$yaInscrito && $equipo->puedeInscribirseAEvento($evento);
+            $puedeInscribirse = ! $yaInscrito && $equipo->puedeInscribirseAEvento($evento);
             $esLider = $equipo->usuarioEsLider(Auth::id());
 
             // Obtener estado de inscripción si existe
@@ -84,7 +86,7 @@ class EventoController extends Controller
                 'yaInscrito' => $yaInscrito,
                 'puedeInscribirse' => $puedeInscribirse,
                 'esLider' => $esLider,
-                'estadoInscripcion' => $estadoInscripcion
+                'estadoInscripcion' => $estadoInscripcion,
             ];
         });
 
@@ -94,6 +96,9 @@ class EventoController extends Controller
     // Inscribir equipo a un evento
     public function inscribir(Request $request, Evento $evento)
     {
+        // Actualizar estado del evento según fecha actual
+        $evento->actualizarEstadoSegunFecha();
+
         $request->validate([
             'equipo_id' => 'required|exists:equipos,id',
         ]);
@@ -102,13 +107,13 @@ class EventoController extends Controller
         $user = Auth::user();
 
         // Verificar que el usuario sea líder del equipo
-        if (!$equipo->usuarioEsLider($user->id)) {
+        if (! $equipo->usuarioEsLider($user->id)) {
             return redirect()->back()
                 ->with('error', 'Solo el líder del equipo puede inscribirlo a eventos.');
         }
 
         // Verificar que el usuario sea miembro del equipo
-        if (!$equipo->miembros()->where('user_id', $user->id)->exists()) {
+        if (! $equipo->miembros()->where('user_id', $user->id)->exists()) {
             return redirect()->back()
                 ->with('error', 'No eres miembro de este equipo.');
         }
@@ -119,16 +124,22 @@ class EventoController extends Controller
                 ->with('error', 'Tu equipo ya está inscrito o tiene una solicitud pendiente en este evento.');
         }
 
-        // Verificar que el evento esté disponible
-        if (!$evento->estaDisponibleParaInscripcion()) {
+        // Verificar que el evento esté programado (no activo ni finalizado)
+        if ($evento->estado !== 'programado') {
             return redirect()->back()
-                ->with('error', 'Este evento no está disponible para inscripción en este momento.');
+                ->with('error', 'Solo puedes inscribirte a eventos programados. Este evento ya está en curso o ha finalizado.');
+        }
+
+        // Verificar que haya cupo disponible
+        if (! $evento->tieneCupoDisponible()) {
+            return redirect()->back()
+                ->with('error', 'Este evento ha alcanzado el límite de equipos.');
         }
 
         // Verificar restricción de categoría
-        if (!$equipo->puedeInscribirseAEvento($evento)) {
+        if (! $equipo->puedeInscribirseAEvento($evento)) {
             return redirect()->back()
-                ->with('error', 'Tu equipo ya está inscrito en un evento de la categoría "' . $evento->categoria . '". Solo puedes inscribirte a un evento por categoría.');
+                ->with('error', 'Tu equipo ya está inscrito en un evento de la categoría "'.$evento->categoria.'". Solo puedes inscribirte a un evento por categoría.');
         }
 
         // Inscribir equipo (estado pendiente por defecto)
@@ -136,6 +147,9 @@ class EventoController extends Controller
             'estado' => 'pendiente',
             'fecha_inscripcion' => now(),
         ]);
+
+        // Crear notificación para el administrador
+        Notificacion::crearSolicitudEquipo($equipo, $evento);
 
         return redirect()->back()
             ->with('success', 'Solicitud de inscripción enviada exitosamente. El administrador revisará tu solicitud.');
@@ -152,13 +166,13 @@ class EventoController extends Controller
         $user = Auth::user();
 
         // Verificar que el usuario sea líder del equipo
-        if (!$equipo->usuarioEsLider($user->id)) {
+        if (! $equipo->usuarioEsLider($user->id)) {
             return redirect()->back()
                 ->with('error', 'Solo el líder del equipo puede cancelar la inscripción.');
         }
 
         // Verificar que el equipo esté inscrito
-        if (!$equipo->estaInscritoEnEvento($evento->id)) {
+        if (! $equipo->estaInscritoEnEvento($evento->id)) {
             return redirect()->back()
                 ->with('error', 'Tu equipo no está inscrito en este evento.');
         }

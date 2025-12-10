@@ -10,43 +10,38 @@ use Illuminate\Http\Request;
 
 class ConstanciaController extends Controller
 {
-    // Listar todas las constancias
+    // Listar constancias agrupadas por eventos finalizados
     public function index(Request $request)
     {
-        $query = Constancia::with(['usuario', 'evento', 'equipo']);
+        // Obtener eventos finalizados con constancias
+        $eventosFinalizados = Evento::where('estado', 'finalizado')
+            ->withCount('constancias')
+            ->having('constancias_count', '>', 0)
+            ->with(['constancias' => function ($query) {
+                $query->with(['usuario', 'equipo'])->orderBy('tipo', 'asc');
+            }])
+            ->orderBy('fecha_fin', 'desc')
+            ->get();
 
-        // Filtros
-        if ($request->filled('evento_id')) {
-            $query->where('evento_id', $request->evento_id);
-        }
-
-        if ($request->filled('tipo')) {
-            $query->where('tipo', $request->tipo);
-        }
-
-        if ($request->filled('buscar')) {
-            $query->whereHas('usuario', function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->buscar . '%')
-                  ->orWhere('email', 'like', '%' . $request->buscar . '%');
-            });
-        }
-
-        $constancias = $query->orderBy('fecha_emision', 'desc')->paginate(20);
-
-        // Obtener eventos para el filtro
-        $eventos = Evento::orderBy('fecha_inicio', 'desc')->get();
+        // Eventos finalizados sin constancias (para generar)
+        $eventosSinConstancias = Evento::where('estado', 'finalizado')
+            ->doesntHave('constancias')
+            ->orderBy('fecha_fin', 'desc')
+            ->get();
 
         // Estadísticas
         $totalConstancias = Constancia::count();
         $constanciasGanador = Constancia::where('tipo', 'ganador')->count();
         $constanciasJuez = Constancia::where('tipo', 'juez')->count();
+        $constanciasParticipante = Constancia::where('tipo', 'participante')->count();
 
         return view('admin.constancias.index', compact(
-            'constancias',
-            'eventos',
+            'eventosFinalizados',
+            'eventosSinConstancias',
             'totalConstancias',
             'constanciasGanador',
-            'constanciasJuez'
+            'constanciasJuez',
+            'constanciasParticipante'
         ));
     }
 
@@ -62,7 +57,7 @@ class ConstanciaController extends Controller
     public function generarPorEvento(Evento $evento)
     {
         // Validar que el evento esté finalizado
-        if (!$evento->puedeGenerarConstancias()) {
+        if (! $evento->puedeGenerarConstancias()) {
             return back()->with('error', 'No se pueden generar constancias. El evento debe estar marcado como "Finalizado" para expedir constancias.');
         }
 
@@ -73,12 +68,15 @@ class ConstanciaController extends Controller
                 $ganadores = $evento->generarConstanciasGanadores();
             }
 
+            // Generar constancias para participantes
+            $participantes = $evento->generarConstanciasParticipantes();
+
             // Generar constancias para jueces
             $jueces = $evento->generarConstanciasJueces();
 
-            return back()->with('success', "Se generaron {$ganadores} constancias de ganadores y {$jueces} reconocimientos de jueces para el evento {$evento->nombre}");
+            return back()->with('success', "Se generaron {$ganadores} constancias de ganadores, {$participantes} constancias de participantes y {$jueces} reconocimientos de jueces para el evento {$evento->nombre}");
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al generar constancias: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar constancias: '.$e->getMessage());
         }
     }
 
@@ -117,7 +115,7 @@ class ConstanciaController extends Controller
 
         // Verificar si faltan constancias por generar
         $equiposInscritos = $evento->equiposAprobados()->with('miembros')->get();
-        $totalMiembros = $equiposInscritos->sum(fn($equipo) => $equipo->miembros->count());
+        $totalMiembros = $equiposInscritos->sum(fn ($equipo) => $equipo->miembros->count());
         $totalConstancias = $constancias->count();
 
         return view('admin.constancias.evento', compact(

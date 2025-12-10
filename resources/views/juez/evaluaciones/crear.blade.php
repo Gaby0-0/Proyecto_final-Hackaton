@@ -49,6 +49,102 @@
         </div>
     </div>
 
+    <!-- Información del Proyecto -->
+    @if($inscripcion)
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-4 text-white">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-project-diagram mr-2"></i>
+                Información del Proyecto
+            </h2>
+        </div>
+
+        <div class="p-6">
+            <!-- Título y Descripción -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ $inscripcion->pivot->proyecto_titulo }}</h3>
+                @if($inscripcion->pivot->proyecto_descripcion)
+                    <p class="text-gray-700 leading-relaxed">{{ $inscripcion->pivot->proyecto_descripcion }}</p>
+                @else
+                    <p class="text-gray-500 italic">Sin descripción</p>
+                @endif
+            </div>
+
+            <!-- Proyecto Final -->
+            @if($inscripcion->pivot->proyecto_final_url)
+            <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-green-900 mb-1">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Proyecto Final Entregado
+                        </p>
+                        @if($inscripcion->pivot->fecha_entrega_final)
+                            <p class="text-xs text-green-700">
+                                Entregado: {{ \Carbon\Carbon::parse($inscripcion->pivot->fecha_entrega_final)->format('d/m/Y H:i') }}
+                            </p>
+                        @endif
+                    </div>
+                    <a href="{{ Storage::url($inscripcion->pivot->proyecto_final_url) }}"
+                       target="_blank"
+                       class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors">
+                        <i class="fas fa-external-link-alt mr-2"></i>
+                        Ver Proyecto
+                    </a>
+                </div>
+            </div>
+            @else
+            <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    El equipo aún no ha entregado el proyecto final
+                </p>
+            </div>
+            @endif
+
+            <!-- Avances -->
+            @if(!empty($avances))
+            <div>
+                <h4 class="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                    <i class="fas fa-tasks mr-2 text-purple-600"></i>
+                    Avances del Proyecto ({{ count($avances) }})
+                </h4>
+                <div class="space-y-3">
+                    @foreach($avances as $index => $avance)
+                    <div class="border border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
+                        <div class="flex items-start justify-between mb-2">
+                            <h5 class="font-semibold text-gray-900">{{ $avance['titulo'] ?? 'Avance #' . ($index + 1) }}</h5>
+                            <span class="text-xs text-gray-500">
+                                {{ isset($avance['fecha']) ? \Carbon\Carbon::parse($avance['fecha'])->format('d/m/Y') : 'Sin fecha' }}
+                            </span>
+                        </div>
+                        @if(isset($avance['descripcion']))
+                            <p class="text-sm text-gray-700 mb-2">{{ $avance['descripcion'] }}</p>
+                        @endif
+                        @if(isset($avance['url']) && $avance['url'])
+                            <a href="{{ $avance['url'] }}"
+                               target="_blank"
+                               class="inline-flex items-center text-sm text-purple-600 hover:text-purple-700 font-medium">
+                                <i class="fas fa-link mr-1"></i>
+                                Ver avance
+                            </a>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @else
+            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <p class="text-sm text-gray-600 text-center">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    No hay avances registrados para este proyecto
+                </p>
+            </div>
+            @endif
+        </div>
+    </div>
+    @endif
+
     <!-- Formulario de Evaluación -->
     <div class="bg-white rounded-lg shadow-sm p-6">
         <div class="mb-6">
