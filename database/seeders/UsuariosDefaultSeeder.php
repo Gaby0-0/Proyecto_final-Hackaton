@@ -44,7 +44,7 @@ class UsuariosDefaultSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
-        $this->command->info('✅ 3 usuarios creados exitosamente:');
+        $this->command->info(' 3 usuarios creados exitosamente:');
         $this->command->info('   Admin: admin@concursito.com / 12345678');
         $this->command->info('   Juez: juez@concursito.com / 12345678');
         $this->command->info('   Alumno: alumno@concursito.com / 12345678');
