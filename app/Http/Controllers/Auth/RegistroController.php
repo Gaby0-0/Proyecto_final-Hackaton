@@ -1,15 +1,16 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
+
 use App\Http\Controllers\Controller;
-use App\Models\Usuario;
+use App\Models\ConfiguracionGlobal;
 use App\Models\DatosEstudiante;
 use App\Models\Equipo;
-use App\Models\ConfiguracionGlobal;
-use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Usuario;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;    
 
 class RegistroController extends Controller
 {
@@ -19,7 +20,7 @@ class RegistroController extends Controller
     public function index()
     {
         //
-        
+
     }
 
     /**
@@ -39,16 +40,16 @@ class RegistroController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6|confirmed'
+            'password' => 'required|min:6|confirmed',
         ]);
 
         // Crear usuario con rol de estudiante por defecto
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
+            'name' => $request->name,
+            'email' => $request->email,
             'password' => Hash::make($request->password),
-            'admin'    => 0,
-            'role'     => 'estudiante'
+            'role' => 'estudiante',
+            'activo' => true,
         ]);
 
         // Iniciar sesión automáticamente
@@ -56,7 +57,7 @@ class RegistroController extends Controller
 
         // Redirigir al siguiente paso: datos de estudiante
         return redirect()->route('registro.datos-estudiante')
-            ->with('success','¡Cuenta creada! Ahora completa tus datos');
+            ->with('success', '¡Cuenta creada! Ahora completa tus datos');
     }
 
     // Mostrar formulario de datos de estudiante
@@ -101,7 +102,7 @@ class RegistroController extends Controller
     public function mostrarEquipos()
     {
         // Verificar que completó datos de estudiante
-        if (!Auth::user()->datosEstudiante || !Auth::user()->datosEstudiante->datos_completos) {
+        if (! Auth::user()->datosEstudiante || ! Auth::user()->datosEstudiante->datos_completos) {
             return redirect()->route('registro.datos-estudiante');
         }
 
@@ -126,7 +127,7 @@ class RegistroController extends Controller
         $equipo = Equipo::where('codigo', $request->codigo)->firstOrFail();
 
         // Verificar si puede unirse
-        if (!$equipo->puedeUnirse(Auth::user())) {
+        if (! $equipo->puedeUnirse(Auth::user())) {
             if ($equipo->estaLleno()) {
                 return back()->with('error', 'Este equipo ya está lleno');
             } else {
@@ -138,7 +139,7 @@ class RegistroController extends Controller
         $equipo->miembros()->attach(Auth::id(), ['rol_equipo' => 'miembro']);
 
         return redirect()->route('estudiante.dashboard')
-            ->with('success', 'Te has unido al equipo ' . $equipo->nombre);
+            ->with('success', 'Te has unido al equipo '.$equipo->nombre);
     }
 
     // Crear equipo desde registro
@@ -161,7 +162,7 @@ class RegistroController extends Controller
         $equipo->miembros()->attach(Auth::id(), ['rol_equipo' => 'lider']);
 
         return redirect()->route('estudiante.dashboard')
-            ->with('success', 'Equipo creado exitosamente. Eres el líder del equipo ' . $equipo->nombre);
+            ->with('success', 'Equipo creado exitosamente. Eres el líder del equipo '.$equipo->nombre);
     }
 
     /**

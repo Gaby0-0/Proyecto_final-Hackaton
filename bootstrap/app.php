@@ -19,11 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'juez.info' => \App\Http\Middleware\VerificarInformacionJuez::class,
         ]);
 
-        // Agregar middlewares globales para rutas web
-        $middleware->web(append: [
-            \App\Http\Middleware\VerificarUsuarioActivo::class,
-            \App\Http\Middleware\VerificarInformacionJuez::class,
-        ]);
+        // Middleware globales removidos - se aplican individualmente en las rutas
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

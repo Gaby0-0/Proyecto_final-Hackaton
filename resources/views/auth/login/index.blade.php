@@ -9,15 +9,32 @@
 <body>
     <div class="login-container">
         <h1>Iniciar Sesión</h1>
-        
+
+        @if ($errors->any())
+            <div style="background-color: #fee; border: 1px solid #fcc; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                <ul style="margin: 0; padding-left: 20px; color: #c00;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if (session('success'))
+            <div style="background-color: #efe; border: 1px solid #cfc; padding: 10px; margin: 10px 0; border-radius: 5px; color: #060;">
+                {{ session('success') }}
+            </div>
+        @endif
+
         <form action="{{ route('login.store') }}" method="POST" id="loginForm">
         @csrf
             <div class="form-group">
                 <label for="email">Correo Electrónico</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value="{{ old('email') }}"
                     placeholder="usuario@universidad.edu"
                     required
                 >

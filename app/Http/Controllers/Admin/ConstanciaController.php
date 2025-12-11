@@ -61,6 +61,14 @@ class ConstanciaController extends Controller
             return back()->with('error', 'No se pueden generar constancias. El evento debe estar marcado como "Finalizado" para expedir constancias.');
         }
 
+        // Verificar que haya equipos o jueces
+        $equiposCount = $evento->equiposAprobados()->count();
+        $juecesCount = $evento->jueces()->count();
+
+        if ($equiposCount === 0 && $juecesCount === 0) {
+            return back()->with('error', "No se pueden generar constancias para el evento '{$evento->nombre}' porque no tiene equipos participantes ni jueces asignados.");
+        }
+
         try {
             // Generar constancias de ganadores (si existen)
             $ganadores = 0;
@@ -74,8 +82,39 @@ class ConstanciaController extends Controller
             // Generar constancias para jueces
             $jueces = $evento->generarConstanciasJueces();
 
-            return back()->with('success', "Se generaron {$ganadores} constancias de ganadores, {$participantes} constancias de participantes y {$jueces} reconocimientos de jueces para el evento {$evento->nombre}");
+            $total = $ganadores + $participantes + $jueces;
+
+            if ($total === 0) {
+                return back()->with('warning', "No se generaron constancias nuevas. Es posible que ya existan constancias para todos los participantes del evento '{$evento->nombre}'.");
+            }
+
+            $mensaje = "Se generaron {$total} constancia(s) para el evento '{$evento->nombre}': ";
+            $detalles = [];
+
+            if ($ganadores > 0) {
+                $detalles[] = "{$ganadores} de ganadores";
+            }
+            if ($participantes > 0) {
+                $detalles[] = "{$participantes} de participantes";
+            }
+            if ($jueces > 0) {
+                $detalles[] = "{$jueces} de jueces";
+            }
+
+            if (! $evento->tieneGanador() && $equiposCount > 0) {
+                $mensaje .= implode(', ', $detalles).'. Nota: No se generaron constancias de ganadores porque no hay ganador asignado en el evento.';
+            } else {
+                $mensaje .= implode(', ', $detalles).'.';
+            }
+
+            return back()->with('success', $mensaje);
         } catch (\Exception $e) {
+            \Log::error('Error al generar constancias', [
+                'evento_id' => $evento->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return back()->with('error', 'Error al generar constancias: '.$e->getMessage());
         }
     }

@@ -116,16 +116,32 @@
                                 @endif
                             </div>
 
-                            <!-- Enlaces -->
+                            <!-- Estado del Proyecto Final -->
                             @if($equipo->pivot->proyecto_final_url)
                                 <div class="mb-4">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs font-medium text-green-600">
+                                            <i class="fas fa-check-circle mr-1"></i>
+                                            Proyecto final entregado
+                                        </span>
+                                    </div>
                                     <a href="{{ Storage::url($equipo->pivot->proyecto_final_url) }}"
                                        target="_blank"
                                        class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
-                                        <i class="fas fa-link mr-1"></i>
-                                        Ver proyecto
+                                        <i class="fas fa-file-download mr-1"></i>
+                                        Descargar proyecto
                                         <i class="fas fa-external-link-alt ml-1 text-xs"></i>
                                     </a>
+                                </div>
+                            @else
+                                <div class="mb-4 bg-red-50 border border-red-200 rounded-lg p-3">
+                                    <p class="text-red-800 text-xs font-medium">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                        Sin proyecto final
+                                    </p>
+                                    <p class="text-red-600 text-xs mt-1">
+                                        Este equipo no ha subido su entrega final
+                                    </p>
                                 </div>
                             @endif
 
@@ -144,7 +160,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            @else
+                            @elseif($equipo->pivot->proyecto_final_url)
                                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                                     <p class="text-yellow-800 text-sm font-medium">
                                         <i class="fas fa-clock mr-1"></i>
@@ -155,18 +171,26 @@
 
                             <!-- Acciones -->
                             <div class="flex gap-2">
-                                @if($equipo->evaluacion_existente)
-                                    <a href="{{ route('juez.evaluaciones.editar', ['evento' => $evento, 'equipo' => $equipo]) }}"
-                                       class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium text-center transition-colors">
-                                        <i class="fas fa-edit mr-1"></i>
-                                        Editar Evaluación
-                                    </a>
+                                @if($equipo->pivot->proyecto_final_url)
+                                    @if($equipo->evaluacion_existente)
+                                        <a href="{{ route('juez.evaluaciones.editar', ['evento' => $evento, 'equipo' => $equipo]) }}"
+                                           class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium text-center transition-colors">
+                                            <i class="fas fa-edit mr-1"></i>
+                                            Editar Evaluación
+                                        </a>
+                                    @else
+                                        <a href="{{ route('juez.evaluaciones.crear', ['evento' => $evento, 'equipo' => $equipo]) }}"
+                                           class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium text-center transition-colors">
+                                            <i class="fas fa-clipboard-check mr-1"></i>
+                                            Evaluar Ahora
+                                        </a>
+                                    @endif
                                 @else
-                                    <a href="{{ route('juez.evaluaciones.crear', ['evento' => $evento, 'equipo' => $equipo]) }}"
-                                       class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium text-center transition-colors">
-                                        <i class="fas fa-clipboard-check mr-1"></i>
-                                        Evaluar Ahora
-                                    </a>
+                                    <button disabled
+                                            class="flex-1 bg-gray-300 text-gray-500 px-4 py-2 rounded-lg text-sm font-medium text-center cursor-not-allowed">
+                                        <i class="fas fa-ban mr-1"></i>
+                                        No disponible
+                                    </button>
                                 @endif
                             </div>
                         </div>

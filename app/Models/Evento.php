@@ -75,9 +75,15 @@ class Evento extends Model
 
     public function estaActivoPorFecha()
     {
+        // Obtener fecha y hora actual con precisión de segundos
         $ahora = now();
 
-        return $ahora->gte($this->fecha_inicio) && $ahora->lt($this->fecha_fin);
+        // Asegurarse de que las fechas sean instancias de Carbon
+        $fechaInicio = \Carbon\Carbon::parse($this->fecha_inicio);
+        $fechaFin = \Carbon\Carbon::parse($this->fecha_fin);
+
+        // Verificar si la fecha/hora actual está entre inicio y fin
+        return $ahora->between($fechaInicio, $fechaFin, false);
     }
 
     public function estaDisponibleParaInscripcion()
@@ -130,22 +136,33 @@ class Evento extends Model
 
     public function actualizarEstadoSegunFecha()
     {
+        // Obtener fecha y hora actual con precisión de segundos
         $ahora = now();
 
-        if ($this->estado === 'finalizado' && $ahora->lt($this->fecha_fin)) {
+        // No actualizar eventos cancelados automáticamente
+        if ($this->estado === 'cancelado') {
             return false;
         }
 
-        if ($ahora->lt($this->fecha_inicio)) {
+        // Asegurarse de que las fechas sean instancias de Carbon
+        $fechaInicio = \Carbon\Carbon::parse($this->fecha_inicio);
+        $fechaFin = \Carbon\Carbon::parse($this->fecha_fin);
+
+        // Comparar fecha Y hora completa
+        if ($ahora->isBefore($fechaInicio)) {
+            // Antes de la fecha/hora de inicio → Programado
             $nuevoEstado = 'programado';
-        } elseif ($ahora->gte($this->fecha_inicio) && $ahora->lt($this->fecha_fin)) {
+        } elseif ($ahora->between($fechaInicio, $fechaFin, false)) {
+            // Entre fecha/hora inicio y fin (sin incluir fin) → Activo
             $nuevoEstado = 'activo';
         } else {
+            // Después de fecha/hora fin → Finalizado
             $nuevoEstado = 'finalizado';
         }
 
         if ($this->estado !== $nuevoEstado) {
-            $this->update(['estado' => $nuevoEstado]);
+            // Usar updateQuietly para evitar disparar el observer y crear loops infinitos
+            $this->updateQuietly(['estado' => $nuevoEstado]);
 
             return true;
         }
@@ -155,13 +172,38 @@ class Evento extends Model
 
     public function obtenerEstadoSegunFecha()
     {
+        // Obtener fecha y hora actual con precisión de segundos
         $ahora = now();
 
-        if ($ahora->lt($this->fecha_inicio)) {
+        // Asegurarse de que las fechas sean instancias de Carbon
+        $fechaInicio = \Carbon\Carbon::parse($this->fecha_inicio);
+        $fechaFin = \Carbon\Carbon::parse($this->fecha_fin);
+
+        // Log temporal para debugging
+        \Log::info('=== CALCULANDO ESTADO DE EVENTO ===', [
+            'evento_nombre' => $this->nombre ?? 'Nuevo evento',
+            'ahora' => $ahora->format('Y-m-d H:i:s'),
+            'fecha_inicio' => $fechaInicio->format('Y-m-d H:i:s'),
+            'fecha_fin' => $fechaFin->format('Y-m-d H:i:s'),
+            'isBefore_inicio' => $ahora->isBefore($fechaInicio),
+            'between_inicio_fin' => $ahora->between($fechaInicio, $fechaFin, false),
+        ]);
+
+        // Comparar fecha Y hora completa
+        if ($ahora->isBefore($fechaInicio)) {
+            // Antes de la fecha/hora de inicio → Programado
+            \Log::info('Estado calculado: PROGRAMADO');
+
             return 'programado';
-        } elseif ($ahora->gte($this->fecha_inicio) && $ahora->lt($this->fecha_fin)) {
+        } elseif ($ahora->between($fechaInicio, $fechaFin, false)) {
+            // Entre fecha/hora inicio y fin (sin incluir fin) → Activo
+            \Log::info('Estado calculado: ACTIVO');
+
             return 'activo';
         } else {
+            // Después de fecha/hora fin → Finalizado
+            \Log::info('Estado calculado: FINALIZADO');
+
             return 'finalizado';
         }
     }

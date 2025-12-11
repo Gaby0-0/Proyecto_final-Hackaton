@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-gray-50">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +17,7 @@
 
     @stack('styles')
 </head>
-<body class="h-full" x-data="{ sidebarOpen: false }">
+<body class="h-full bg-gradient-to-br from-gray-50 via-white to-primary-50/20" x-data="{ sidebarOpen: false }">
     <div class="min-h-full">
         <!-- Sidebar móvil -->
         <div x-show="sidebarOpen"
@@ -31,7 +31,7 @@
              role="dialog"
              aria-modal="true"
              style="display: none;">
-            <div class="fixed inset-0 bg-gray-900/80"></div>
+            <div class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm"></div>
 
             <div class="fixed inset-0 flex">
                 <div x-show="sidebarOpen"
@@ -44,7 +44,7 @@
                      @click.away="sidebarOpen = false"
                      class="relative mr-16 flex w-full max-w-xs flex-1">
                     <div class="absolute left-full top-0 flex w-16 justify-center pt-5">
-                        <button type="button" @click="sidebarOpen = false" class="-m-2.5 p-2.5">
+                        <button type="button" @click="sidebarOpen = false" class="-m-2.5 p-2.5 hover:scale-110 transition-transform">
                             <span class="sr-only">Cerrar sidebar</span>
                             <i class="fas fa-times text-white text-xl"></i>
                         </button>
@@ -55,7 +55,7 @@
         </div>
 
         <!-- Sidebar Desktop -->
-        <div class="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
+        <div class="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col shadow-2xl">
             @include('partials.admin.sidebar')
         </div>
 
@@ -109,13 +109,15 @@
                      x-show="show"
                      x-transition
                      x-init="setTimeout(() => show = false, 5000)"
-                     class="mb-6 rounded-lg bg-green-50 p-4 border border-green-200">
-                    <div class="flex">
-                        <i class="fas fa-check-circle text-green-400"></i>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-green-800">{{ session('success') }}</p>
+                     class="mb-6 rounded-xl bg-gradient-to-r from-secondary-50 to-secondary-100/50 p-4 border border-secondary-200 shadow-lg shadow-secondary-100/50">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-lg gradient-secondary flex items-center justify-center shadow-md">
+                            <i class="fas fa-check-circle text-white"></i>
                         </div>
-                        <button @click="show = false" class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 text-green-500 hover:bg-green-100">
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-semibold text-secondary-900">{{ session('success') }}</p>
+                        </div>
+                        <button @click="show = false" class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-2 text-secondary-500 hover:bg-secondary-200 transition-colors">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -127,13 +129,35 @@
                      x-show="show"
                      x-transition
                      x-init="setTimeout(() => show = false, 5000)"
-                     class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200">
-                    <div class="flex">
-                        <i class="fas fa-exclamation-circle text-red-400"></i>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-red-800">{{ session('error') }}</p>
+                     class="mb-6 rounded-xl bg-gradient-to-r from-primary-50 to-primary-100/50 p-4 border border-primary-200 shadow-lg shadow-primary-100/50">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-lg gradient-primary flex items-center justify-center shadow-md">
+                            <i class="fas fa-exclamation-circle text-white"></i>
                         </div>
-                        <button @click="show = false" class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 text-red-500 hover:bg-red-100">
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-semibold text-primary-900">{{ session('error') }}</p>
+                        </div>
+                        <button @click="show = false" class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-2 text-primary-500 hover:bg-primary-200 transition-colors">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                @endif
+
+                @if(session('warning'))
+                <div x-data="{ show: true }"
+                     x-show="show"
+                     x-transition
+                     x-init="setTimeout(() => show = false, 6000)"
+                     class="mb-6 rounded-xl bg-gradient-to-r from-yellow-50 to-yellow-100/50 p-4 border border-yellow-200 shadow-lg shadow-yellow-100/50">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center shadow-md">
+                            <i class="fas fa-exclamation-triangle text-white"></i>
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-semibold text-yellow-900">{{ session('warning') }}</p>
+                        </div>
+                        <button @click="show = false" class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-2 text-yellow-500 hover:bg-yellow-200 transition-colors">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>

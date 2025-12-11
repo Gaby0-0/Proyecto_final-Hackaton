@@ -80,27 +80,24 @@ $breadcrumbs = [
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
+        </div>
 
-            <!-- Estado -->
-            <div>
-                <label for="estado" class="block text-sm font-medium text-gray-700 mb-2">
-                    Estado <span class="text-red-500">*</span>
-                </label>
-                <select id="estado"
-                        name="estado"
-                        required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('estado') border-red-500 @enderror">
-                    <option value="">Selecciona un estado</option>
-                    <option value="activo" {{ old('estado') == 'activo' ? 'selected' : '' }}>Activo</option>
-                    <option value="programado" {{ old('estado') == 'programado' ? 'selected' : '' }}>Programado</option>
-                    <option value="finalizado" {{ old('estado') == 'finalizado' ? 'selected' : '' }}>Finalizado</option>
-                    <option value="cancelado" {{ old('estado') == 'cancelado' ? 'selected' : '' }}>Cancelado</option>
-                </select>
-                @error('estado')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
+        <!-- Nota informativa sobre el estado -->
+        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-info-circle text-blue-600 mt-1"></i>
+                <div class="text-sm text-blue-800">
+                    <p class="font-semibold mb-1">El estado del evento se calculará automáticamente:</p>
+                    <ul class="list-disc list-inside space-y-1 text-blue-700">
+                        <li><strong>Programado:</strong> Si la fecha/hora de inicio es futura</li>
+                        <li><strong>Activo:</strong> Si estamos entre la fecha/hora de inicio y fin</li>
+                        <li><strong>Finalizado:</strong> Si ya pasó la fecha/hora de fin</li>
+                    </ul>
+                </div>
             </div>
+        </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Modalidad -->
             <div>
                 <label for="modalidad" class="block text-sm font-medium text-gray-700 mb-2">

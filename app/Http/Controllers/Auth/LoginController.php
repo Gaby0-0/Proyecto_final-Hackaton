@@ -1,12 +1,11 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
-use App\Http\Controllers\Controller;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;    
 use Illuminate\Support\Facades\Auth;
+
 class LoginController extends Controller
 {
     /**
@@ -29,11 +28,11 @@ class LoginController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-   public function store(Request $request)
+    public function store(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required']
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
 
         if (Auth::attempt($credentials)) {
@@ -41,20 +40,28 @@ class LoginController extends Controller
 
             $user = Auth::user();
 
+            // Log para debug
+            \Log::info('Usuario autenticado', [
+                'id' => $user->id,
+                'email' => $user->email,
+                'role' => $user->role,
+                'activo' => $user->activo,
+            ]);
+
             // Redirección según el rol del usuario
             if ($user->role === 'admin') {
-                return redirect()->intended('/admin');
+                return redirect('/admin');
             } elseif ($user->role === 'juez') {
-                return redirect()->intended('/juez');
+                return redirect('/juez');
             } else {
                 // estudiante o usuario regular
-                return redirect()->intended('/dashboard');
+                return redirect('/dashboard');
             }
         }
 
         return back()->withErrors([
             'email' => 'Las credenciales no coinciden con nuestros registros.',
-        ]);
+        ])->withInput($request->only('email'));
     }
 
     // Cerrar sesión
@@ -64,8 +71,9 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-         return redirect()->route('login');
+        return redirect()->route('login');
     }
+
     /**
      * Display the specified resource.
      */

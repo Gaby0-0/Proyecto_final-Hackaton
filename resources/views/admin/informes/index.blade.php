@@ -16,7 +16,7 @@ $breadcrumbs = [
     <div x-data="{ open: false }">
         <button @click="open = !open"
                 type="button"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                class="px-4 py-2 gradient-primary text-white rounded-xl hover:shadow-lg transition-all flex items-center gap-2 shadow-md">
             <i class="fas fa-envelope"></i>
             Enviar Informe por Email
         </button>
@@ -25,9 +25,12 @@ $breadcrumbs = [
              @click.away="open = false"
              x-transition
              style="display: none;"
-             class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div class="bg-white rounded-lg p-6 w-full max-w-md" @click.stop>
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Enviar Informe por Email</h3>
+             class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl" @click.stop>
+                <h3 class="text-lg font-bold text-dark-900 mb-4 flex items-center gap-2">
+                    <i class="fas fa-envelope text-primary-500"></i>
+                    Enviar Informe por Email
+                </h3>
                 <form action="{{ route('admin.informes.enviar-email') }}" method="POST">
                     @csrf
                     <div class="mb-4">
@@ -39,7 +42,7 @@ $breadcrumbs = [
                                name="email"
                                value="{{ auth()->user()->email }}"
                                required
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                     </div>
                     <div class="flex gap-3 justify-end">
                         <button type="button"
@@ -48,7 +51,7 @@ $breadcrumbs = [
                             Cancelar
                         </button>
                         <button type="submit"
-                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                class="px-4 py-2 gradient-primary text-white rounded-lg hover:shadow-lg transition-all shadow-md">
                             <i class="fas fa-paper-plane mr-2"></i>
                             Enviar
                         </button>
@@ -65,14 +68,14 @@ $breadcrumbs = [
     <x-admin.card>
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm text-gray-600">Total Eventos</p>
-                <p class="text-3xl font-bold text-blue-600">{{ $totalEventos }}</p>
+                <p class="text-sm text-gray-600 font-medium">Total Eventos</p>
+                <p class="text-3xl font-bold text-primary-600">{{ $totalEventos }}</p>
                 <p class="text-xs text-gray-500 mt-1">
                     {{ $eventosActivos }} activos | {{ $eventosFinalizados }} finalizados
                 </p>
             </div>
-            <div class="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-calendar-days text-blue-600 text-xl"></i>
+            <div class="h-12 w-12 gradient-primary rounded-xl flex items-center justify-center shadow-md">
+                <i class="fas fa-calendar-days text-white text-xl"></i>
             </div>
         </div>
     </x-admin.card>
@@ -81,14 +84,14 @@ $breadcrumbs = [
     <x-admin.card>
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm text-gray-600">Total Equipos</p>
-                <p class="text-3xl font-bold text-green-600">{{ $totalEquipos }}</p>
+                <p class="text-sm text-gray-600 font-medium">Total Equipos</p>
+                <p class="text-3xl font-bold text-secondary-600">{{ $totalEquipos }}</p>
                 <p class="text-xs text-gray-500 mt-1">
                     {{ $equiposActivos }} activos
                 </p>
             </div>
-            <div class="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-users text-green-600 text-xl"></i>
+            <div class="h-12 w-12 gradient-secondary rounded-xl flex items-center justify-center shadow-md">
+                <i class="fas fa-users text-white text-xl"></i>
             </div>
         </div>
     </x-admin.card>
@@ -97,14 +100,14 @@ $breadcrumbs = [
     <x-admin.card>
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm text-gray-600">Total Usuarios</p>
-                <p class="text-3xl font-bold text-purple-600">{{ $totalEstudiantes + $totalJueces + $totalAdmins }}</p>
+                <p class="text-sm text-gray-600 font-medium">Total Usuarios</p>
+                <p class="text-3xl font-bold text-dark-800">{{ $totalEstudiantes + $totalJueces + $totalAdmins }}</p>
                 <p class="text-xs text-gray-500 mt-1">
                     {{ $totalEstudiantes }} estudiantes | {{ $totalJueces }} jueces
                 </p>
             </div>
-            <div class="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-user-friends text-purple-600 text-xl"></i>
+            <div class="h-12 w-12 gradient-dark rounded-xl flex items-center justify-center shadow-md">
+                <i class="fas fa-user-friends text-white text-xl"></i>
             </div>
         </div>
     </x-admin.card>
@@ -113,14 +116,14 @@ $breadcrumbs = [
     <x-admin.card>
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm text-gray-600">Total Evaluaciones</p>
-                <p class="text-3xl font-bold text-yellow-600">{{ $totalEvaluaciones }}</p>
+                <p class="text-sm text-gray-600 font-medium">Total Evaluaciones</p>
+                <p class="text-3xl font-bold text-primary-600">{{ $totalEvaluaciones }}</p>
                 <p class="text-xs text-gray-500 mt-1">
                     Promedio: {{ number_format($promedioEvaluacionesGeneral ?? 0, 2) }}/100
                 </p>
             </div>
-            <div class="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-star text-yellow-600 text-xl"></i>
+            <div class="h-12 w-12 gradient-primary rounded-xl flex items-center justify-center shadow-md">
+                <i class="fas fa-star text-white text-xl"></i>
             </div>
         </div>
     </x-admin.card>
@@ -128,27 +131,30 @@ $breadcrumbs = [
 
 <!-- Constancias -->
 <x-admin.card class="mb-6">
-    <h3 class="text-lg font-bold text-gray-900 mb-4">Constancias Emitidas</h3>
+    <h3 class="text-lg font-bold text-dark-900 mb-4 flex items-center gap-2">
+        <i class="fas fa-certificate text-primary-500"></i>
+        Constancias Emitidas
+    </h3>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="text-center p-4 bg-gray-50 rounded-lg">
-            <i class="fas fa-certificate text-4xl text-gray-600 mb-2"></i>
-            <p class="text-2xl font-bold text-gray-900">{{ $totalConstancias }}</p>
-            <p class="text-sm text-gray-600">Total</p>
+        <div class="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-gray-200">
+            <i class="fas fa-certificate text-4xl text-dark-600 mb-2"></i>
+            <p class="text-2xl font-bold text-dark-900">{{ $totalConstancias }}</p>
+            <p class="text-sm text-gray-600 font-medium">Total</p>
         </div>
-        <div class="text-center p-4 bg-yellow-50 rounded-lg">
-            <i class="fas fa-trophy text-4xl text-yellow-600 mb-2"></i>
-            <p class="text-2xl font-bold text-yellow-900">{{ $constanciasGanadores }}</p>
-            <p class="text-sm text-yellow-700">Ganadores</p>
+        <div class="text-center p-4 bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl border-2 border-primary-200">
+            <i class="fas fa-trophy text-4xl text-primary-600 mb-2"></i>
+            <p class="text-2xl font-bold text-primary-900">{{ $constanciasGanadores }}</p>
+            <p class="text-sm text-primary-700 font-medium">Ganadores</p>
         </div>
-        <div class="text-center p-4 bg-green-50 rounded-lg">
-            <i class="fas fa-users text-4xl text-green-600 mb-2"></i>
-            <p class="text-2xl font-bold text-green-900">{{ $constanciasParticipantes }}</p>
-            <p class="text-sm text-green-700">Participantes</p>
+        <div class="text-center p-4 bg-gradient-to-br from-secondary-50 to-secondary-100 rounded-xl border-2 border-secondary-200">
+            <i class="fas fa-users text-4xl text-secondary-600 mb-2"></i>
+            <p class="text-2xl font-bold text-secondary-900">{{ $constanciasParticipantes }}</p>
+            <p class="text-sm text-secondary-700 font-medium">Participantes</p>
         </div>
-        <div class="text-center p-4 bg-purple-50 rounded-lg">
+        <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border-2 border-purple-200">
             <i class="fas fa-award text-4xl text-purple-600 mb-2"></i>
             <p class="text-2xl font-bold text-purple-900">{{ $constanciasJueces }}</p>
-            <p class="text-sm text-purple-700">Jueces</p>
+            <p class="text-sm text-purple-700 font-medium">Jueces</p>
         </div>
     </div>
 </x-admin.card>
@@ -156,19 +162,22 @@ $breadcrumbs = [
 <!-- Eventos Próximos -->
 @if($eventosProximos->count() > 0)
 <x-admin.card class="mb-6">
-    <h3 class="text-lg font-bold text-gray-900 mb-4">Próximos Eventos</h3>
+    <h3 class="text-lg font-bold text-dark-900 mb-4 flex items-center gap-2">
+        <i class="fas fa-calendar-plus text-secondary-500"></i>
+        Próximos Eventos
+    </h3>
     <div class="space-y-3">
         @foreach($eventosProximos as $evento)
-        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+        <div class="flex items-center justify-between p-3 bg-gradient-to-r from-secondary-50 to-secondary-100/50 rounded-xl border border-secondary-200">
             <div>
-                <h4 class="font-medium text-gray-900">{{ $evento->nombre }}</h4>
+                <h4 class="font-medium text-dark-900">{{ $evento->nombre }}</h4>
                 <p class="text-sm text-gray-600">
-                    <i class="fas fa-calendar mr-1"></i>
+                    <i class="fas fa-calendar mr-1 text-secondary-500"></i>
                     {{ $evento->fecha_inicio->format('d/m/Y') }} - {{ $evento->fecha_fin->format('d/m/Y') }}
                 </p>
             </div>
             <a href="{{ route('admin.eventos.show', $evento) }}"
-               class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+               class="px-3 py-1 gradient-secondary text-white text-sm rounded-lg hover:shadow-lg transition-all shadow-md">
                 Ver
             </a>
         </div>
@@ -180,19 +189,22 @@ $breadcrumbs = [
 <!-- Eventos Recientes -->
 @if($eventosRecientes->count() > 0)
 <x-admin.card class="mb-6">
-    <h3 class="text-lg font-bold text-gray-900 mb-4">Eventos Recientes Finalizados</h3>
+    <h3 class="text-lg font-bold text-dark-900 mb-4 flex items-center gap-2">
+        <i class="fas fa-calendar-check text-dark-600"></i>
+        Eventos Recientes Finalizados
+    </h3>
     <div class="space-y-3">
         @foreach($eventosRecientes as $evento)
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+        <div class="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl border border-gray-200">
             <div>
-                <h4 class="font-medium text-gray-900">{{ $evento->nombre }}</h4>
+                <h4 class="font-medium text-dark-900">{{ $evento->nombre }}</h4>
                 <p class="text-sm text-gray-600">
-                    <i class="fas fa-calendar mr-1"></i>
+                    <i class="fas fa-calendar mr-1 text-dark-500"></i>
                     Finalizado: {{ $evento->fecha_fin->format('d/m/Y') }}
                 </p>
             </div>
             <a href="{{ route('admin.eventos.show', $evento) }}"
-               class="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700">
+               class="px-3 py-1 gradient-dark text-white text-sm rounded-lg hover:shadow-lg transition-all shadow-md">
                 Ver
             </a>
         </div>
@@ -204,29 +216,32 @@ $breadcrumbs = [
 <!-- Top Equipos -->
 @if($topEquipos->count() > 0)
 <x-admin.card class="mb-6">
-    <h3 class="text-lg font-bold text-gray-900 mb-4">Top 10 Equipos por Evaluaciones</h3>
+    <h3 class="text-lg font-bold text-dark-900 mb-4 flex items-center gap-2">
+        <i class="fas fa-trophy text-primary-500"></i>
+        Top 10 Equipos por Evaluaciones
+    </h3>
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+            <thead class="gradient-dark">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Equipo</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Evaluaciones</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Promedio</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Equipo</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Evaluaciones</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Promedio</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @foreach($topEquipos as $equipo)
-                <tr>
+                <tr class="hover:bg-primary-50/50 transition-colors">
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">{{ $equipo->nombre }}</div>
+                        <div class="text-sm font-medium text-dark-900">{{ $equipo->nombre }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-center">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-secondary-100 text-secondary-800 border border-secondary-200">
                             {{ $equipo->evaluaciones_count }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-center">
-                        <span class="text-sm font-bold text-gray-900">
+                        <span class="text-sm font-bold text-primary-600">
                             {{ number_format($equipo->promedio_evaluaciones ?? 0, 2) }}
                         </span>
                     </td>
@@ -241,24 +256,27 @@ $breadcrumbs = [
 <!-- Jueces Activos -->
 @if($juecesActivos->count() > 0)
 <x-admin.card>
-    <h3 class="text-lg font-bold text-gray-900 mb-4">Top 10 Jueces Más Activos</h3>
+    <h3 class="text-lg font-bold text-dark-900 mb-4 flex items-center gap-2">
+        <i class="fas fa-gavel text-secondary-500"></i>
+        Top 10 Jueces Más Activos
+    </h3>
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+            <thead class="gradient-dark">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Juez</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Evaluaciones Realizadas</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Juez</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Evaluaciones Realizadas</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @foreach($juecesActivos as $juez)
-                <tr>
+                <tr class="hover:bg-secondary-50/50 transition-colors">
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">{{ $juez->name }}</div>
+                        <div class="text-sm font-medium text-dark-900">{{ $juez->name }}</div>
                         <div class="text-sm text-gray-500">{{ $juez->email }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-center">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-primary-100 text-primary-800 border border-primary-200">
                             {{ $juez->evaluaciones_realizadas_count }}
                         </span>
                     </td>

@@ -16,11 +16,25 @@ class VerificarUsuarioActivo
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Excluir rutas públicas que no requieren verificación de usuario activo
+        $rutasExcluidas = [
+            'login',
+            'registro',
+            'registro.store',
+            'login.store',
+            'logout',
+        ];
+
+        // Si la ruta actual está en las rutas excluidas, continuar sin verificar
+        if (in_array($request->route()?->getName(), $rutasExcluidas)) {
+            return $next($request);
+        }
+
         if (Auth::check()) {
             $user = Auth::user();
 
             // Verificar si el usuario está activo
-            if (!$user->activo) {
+            if (! $user->activo) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();

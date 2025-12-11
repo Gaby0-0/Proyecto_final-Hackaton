@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Evento;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class EventoController extends Controller
 {
@@ -17,7 +16,7 @@ class EventoController extends Controller
 
             // Filtro por búsqueda
             if ($request->filled('buscar')) {
-                $query->where('nombre', 'like', '%' . $request->buscar . '%');
+                $query->where('nombre', 'like', '%'.$request->buscar.'%');
             }
 
             // Filtro por estado
@@ -29,8 +28,9 @@ class EventoController extends Controller
 
             return view('admin.eventos.index', compact('eventos'));
         } catch (\Exception $e) {
-            \Log::error('Error en admin.eventos.index: ' . $e->getMessage());
-            return redirect()->route('admin.dashboard')->with('error', 'Error al cargar eventos: ' . $e->getMessage());
+            \Log::error('Error en admin.eventos.index: '.$e->getMessage());
+
+            return redirect()->route('admin.dashboard')->with('error', 'Error al cargar eventos: '.$e->getMessage());
         }
     }
 
@@ -44,16 +44,42 @@ class EventoController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'fecha_inicio' => 'required|date',
-            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
-            'estado' => 'required|in:activo,programado,finalizado,cancelado',
+            'fecha_inicio' => 'required|date_format:Y-m-d\TH:i',
+            'fecha_fin' => 'required|date_format:Y-m-d\TH:i|after:fecha_inicio',
             'modalidad' => 'required|in:presencial,virtual,hibrida',
             'max_equipos' => 'required|integer|min:1',
             'tipo' => 'nullable|string',
-            'categoria' => 'nullable|string|max:255'
+            'categoria' => 'nullable|string|max:255',
         ]);
 
-        Evento::create($validated);
+        // Convertir las fechas a Carbon para calcular el estado
+        $fechaInicio = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['fecha_inicio']);
+        $fechaFin = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['fecha_fin']);
+
+        // Calcular el estado basándose en las fechas
+        $ahora = now();
+
+        \Log::info('=== CREANDO EVENTO EN CONTROLADOR ===', [
+            'ahora' => $ahora->toDateTimeString(),
+            'fecha_inicio' => $fechaInicio->toDateTimeString(),
+            'fecha_fin' => $fechaFin->toDateTimeString(),
+        ]);
+
+        if ($ahora->isBefore($fechaInicio)) {
+            $validated['estado'] = 'programado';
+            \Log::info('Estado asignado: PROGRAMADO');
+        } elseif ($ahora->between($fechaInicio, $fechaFin, false)) {
+            $validated['estado'] = 'activo';
+            \Log::info('Estado asignado: ACTIVO');
+        } else {
+            $validated['estado'] = 'finalizado';
+            \Log::info('Estado asignado: FINALIZADO');
+        }
+
+        // Crear el evento con el estado ya calculado
+        $evento = Evento::create($validated);
+
+        \Log::info('Evento creado con estado: '.$evento->estado);
 
         return redirect()->route('admin.eventos.index')
             ->with('success', 'Evento creado exitosamente');
@@ -62,6 +88,7 @@ class EventoController extends Controller
     public function show(Evento $evento)
     {
         $evento->load(['equipos.miembros', 'equipos.proyecto', 'jueces']);
+
         return view('admin.eventos.show', compact('evento'));
     }
 
@@ -75,15 +102,18 @@ class EventoController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'fecha_inicio' => 'required|date',
-            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
-            'estado' => 'required|in:activo,programado,finalizado,cancelado',
+            'fecha_inicio' => 'required|date_format:Y-m-d\TH:i',
+            'fecha_fin' => 'required|date_format:Y-m-d\TH:i|after:fecha_inicio',
+            'estado' => 'nullable|in:activo,programado,finalizado,cancelado',
             'modalidad' => 'required|in:presencial,virtual,hibrida',
             'max_equipos' => 'required|integer|min:1',
             'tipo' => 'nullable|string',
-            'categoria' => 'nullable|string|max:255'
+            'categoria' => 'nullable|string|max:255',
         ]);
 
+        // Si se proporciona un estado 'cancelado', respetarlo (no será sobrescrito por el Observer)
+        // Para otros casos, el Observer calculará el estado basándose en las fechas
+        // Laravel convertirá automáticamente las fechas a Carbon usando los $casts del modelo
         $evento->update($validated);
 
         return redirect()->route('admin.eventos.index')
@@ -116,13 +146,13 @@ class EventoController extends Controller
     public function aprobarSolicitud(Evento $evento, $equipoId)
     {
         // Verificar si hay cupo disponible
-        if (!$evento->tieneCupoDisponible()) {
+        if (! $evento->tieneCupoDisponible()) {
             return back()->with('error', 'No hay cupo disponible para este evento');
         }
 
         // Actualizar estado de la solicitud
         $evento->equipos()->updateExistingPivot($equipoId, [
-            'estado' => 'inscrito'
+            'estado' => 'inscrito',
         ]);
 
         return back()->with('success', 'Solicitud aprobada exitosamente');
@@ -142,15 +172,15 @@ class EventoController extends Controller
     {
         // Obtener jueces activos (sin requerir especialidad)
         $jueces = User::where('role', 'juez')
-                     ->where('activo', true)
-                     ->with('eventosAsignados')
-                     ->get();
+            ->where('activo', true)
+            ->with('eventosAsignados')
+            ->get();
 
         // Obtener jueces ya asignados a este evento
         $juecesAsignados = $evento->jueces;
 
         // Agrupar jueces por especialidad (incluir jueces sin especialidad)
-        $jucesPorEspecialidad = $jueces->groupBy(function($juez) {
+        $jucesPorEspecialidad = $jueces->groupBy(function ($juez) {
             return $juez->especialidad ?? 'Sin especialidad';
         });
 
@@ -201,7 +231,7 @@ class EventoController extends Controller
         ]);
 
         $query = User::where('role', 'juez')
-                    ->where('activo', true);
+            ->where('activo', true);
 
         // Filtrar por especialidad si se proporciona
         if ($request->filled('especialidad') && $request->especialidad !== 'Sin especialidad') {
@@ -210,13 +240,13 @@ class EventoController extends Controller
 
         // Obtener jueces disponibles
         $juecesDisponibles = $query->withCount('eventosAsignados')
-                                  ->orderBy('eventos_asignados_count', 'asc')
-                                  ->get();
+            ->orderBy('eventos_asignados_count', 'asc')
+            ->get();
 
         // Filtrar jueces que no estén ya asignados a este evento
         $juecesYaAsignados = $evento->jueces->pluck('id')->toArray();
-        $juecesDisponibles = $juecesDisponibles->filter(function($juez) use ($juecesYaAsignados) {
-            return !in_array($juez->id, $juecesYaAsignados);
+        $juecesDisponibles = $juecesDisponibles->filter(function ($juez) use ($juecesYaAsignados) {
+            return ! in_array($juez->id, $juecesYaAsignados);
         });
 
         if ($juecesDisponibles->isEmpty()) {
@@ -251,7 +281,7 @@ class EventoController extends Controller
         $evento->load([
             'equipoPrimerLugar.miembros',
             'equipoSegundoLugar.miembros',
-            'equipoTercerLugar.miembros'
+            'equipoTercerLugar.miembros',
         ]);
 
         return view('admin.eventos.seleccionar-ganador', compact('evento', 'equiposConPromedios', 'ganadoresSugeridos'));
@@ -269,7 +299,7 @@ class EventoController extends Controller
             ->where('equipos.id', $validated['equipo_id'])
             ->first();
 
-        if (!$equipo) {
+        if (! $equipo) {
             return back()->with('error', 'El equipo seleccionado no está inscrito en este evento');
         }
 
@@ -291,13 +321,13 @@ class EventoController extends Controller
             $mensaje = '3 ganadores establecidos automáticamente:<br>';
 
             if ($ganadores->count() >= 1) {
-                $mensaje .= '🥇 1er lugar: ' . $ganadores->get(0)->nombre . ' (Promedio: ' . number_format($ganadores->get(0)->promedio_evaluacion, 2) . ')<br>';
+                $mensaje .= '🥇 1er lugar: '.$ganadores->get(0)->nombre.' (Promedio: '.number_format($ganadores->get(0)->promedio_evaluacion, 2).')<br>';
             }
             if ($ganadores->count() >= 2) {
-                $mensaje .= '🥈 2do lugar: ' . $ganadores->get(1)->nombre . ' (Promedio: ' . number_format($ganadores->get(1)->promedio_evaluacion, 2) . ')<br>';
+                $mensaje .= '🥈 2do lugar: '.$ganadores->get(1)->nombre.' (Promedio: '.number_format($ganadores->get(1)->promedio_evaluacion, 2).')<br>';
             }
             if ($ganadores->count() >= 3) {
-                $mensaje .= '🥉 3er lugar: ' . $ganadores->get(2)->nombre . ' (Promedio: ' . number_format($ganadores->get(2)->promedio_evaluacion, 2) . ')';
+                $mensaje .= '🥉 3er lugar: '.$ganadores->get(2)->nombre.' (Promedio: '.number_format($ganadores->get(2)->promedio_evaluacion, 2).')';
             }
 
             return back()->with('success', $mensaje);
@@ -332,11 +362,11 @@ class EventoController extends Controller
                 'avances',
                 'proyecto_final_url',
                 'fecha_entrega_final',
-                'notas_equipo'
+                'notas_equipo',
             ])
             ->get()
             ->map(function ($equipo) use ($evento) {
-                $tieneProyecto = !empty($equipo->pivot->proyecto_titulo);
+                $tieneProyecto = ! empty($equipo->pivot->proyecto_titulo);
 
                 $avances = [];
                 if ($equipo->pivot->avances) {
@@ -368,8 +398,8 @@ class EventoController extends Controller
                 ];
             });
 
-        $equiposConProyecto = $equipos->filter(fn($e) => $e['tieneProyecto'])->sortByDesc('promedio_evaluacion')->values();
-        $equiposSinProyecto = $equipos->filter(fn($e) => !$e['tieneProyecto']);
+        $equiposConProyecto = $equipos->filter(fn ($e) => $e['tieneProyecto'])->sortByDesc('promedio_evaluacion')->values();
+        $equiposSinProyecto = $equipos->filter(fn ($e) => ! $e['tieneProyecto']);
 
         return view('admin.eventos.proyectos', compact('evento', 'equiposConProyecto', 'equiposSinProyecto'));
     }
@@ -387,11 +417,11 @@ class EventoController extends Controller
                 'avances',
                 'proyecto_final_url',
                 'fecha_entrega_final',
-                'notas_equipo'
+                'notas_equipo',
             ])
             ->first();
 
-        if (!$inscripcion) {
+        if (! $inscripcion) {
             return redirect()->route('admin.eventos.proyectos', $evento)
                 ->with('error', 'Este equipo no está inscrito en el evento');
         }

@@ -20,7 +20,20 @@ use Illuminate\Support\Facades\Route;
 
 // Rutas públicas o de usuarios normales
 Route::get('/', function () {
-    return view('welcome');
+    // Si el usuario ya está autenticado, redirigir a su dashboard correspondiente
+    if (auth()->check()) {
+        $user = auth()->user();
+
+        return match ($user->role) {
+            'admin' => redirect()->route('admin.dashboard'),
+            'estudiante' => redirect()->route('estudiante.dashboard'),
+            'juez' => redirect()->route('juez.dashboard'),
+            default => redirect()->route('login'),
+        };
+    }
+
+    // Si no está autenticado, redirigir al login
+    return redirect()->route('login');
 });
 
 // Grupo de rutas de administración

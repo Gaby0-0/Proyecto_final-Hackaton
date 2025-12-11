@@ -8,4 +8,73 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Paleta de colores personalizada - Naranja, Negro, Azul, Blanco */
+
+    /* Naranja principal - Color primario vibrante */
+    --color-primary-50: #fff7ed;
+    --color-primary-100: #ffedd5;
+    --color-primary-200: #fed7aa;
+    --color-primary-300: #fdba74;
+    --color-primary-400: #fb923c;
+    --color-primary-500: #FF6B35;  /* Naranja principal */
+    --color-primary-600: #ea580c;
+    --color-primary-700: #c2410c;
+    --color-primary-800: #9a3412;
+    --color-primary-900: #7c2d12;
+    --color-primary-950: #431407;
+
+    /* Azul secundario - Color complementario */
+    --color-secondary-50: #f0f9ff;
+    --color-secondary-100: #e0f2fe;
+    --color-secondary-200: #bae6fd;
+    --color-secondary-300: #7dd3fc;
+    --color-secondary-400: #38bdf8;
+    --color-secondary-500: #0EA5E9;  /* Azul principal */
+    --color-secondary-600: #0284c7;
+    --color-secondary-700: #0369a1;
+    --color-secondary-800: #075985;
+    --color-secondary-900: #0c4a6e;
+    --color-secondary-950: #082f49;
+
+    /* Negro/Oscuro - Para sidebars y headers */
+    --color-dark-50: #f8f9fa;
+    --color-dark-100: #e9ecef;
+    --color-dark-200: #dee2e6;
+    --color-dark-300: #adb5bd;
+    --color-dark-400: #6c757d;
+    --color-dark-500: #495057;
+    --color-dark-600: #343a40;
+    --color-dark-700: #2d3338;
+    --color-dark-800: #212529;
+    --color-dark-900: #1A1A1A;  /* Negro principal */
+    --color-dark-950: #0d0d0d;
+}
+
+/* Estilos personalizados para el diseño moderno */
+.gradient-primary {
+    background: linear-gradient(135deg, #FF6B35 0%, #ea580c 100%);
+}
+
+.gradient-secondary {
+    background: linear-gradient(135deg, #0EA5E9 0%, #0284c7 100%);
+}
+
+.gradient-dark {
+    background: linear-gradient(135deg, #1A1A1A 0%, #343a40 100%);
+}
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }

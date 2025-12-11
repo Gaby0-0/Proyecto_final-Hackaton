@@ -21,7 +21,12 @@
       "Bash(if not exist \"resources\\views\\admin\\perfil\" mkdir \"resources\\views\\admin\\perfil\")",
       "Bash(vendor/bin/pint:*)",
       "Bash(composer require:*)",
-      "Bash(php -r:*)"
+      "Bash(php -r:*)",
+      "Bash(npm run build:*)",
+      "Bash(php reset_passwords.php:*)",
+      "Bash(del reset_passwords.php)",
+      "Bash(php check_constancias.php:*)",
+      "Bash(php test_constancias.php:*)"
     ],
     "deny": [],
     "ask": []

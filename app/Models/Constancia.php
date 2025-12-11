@@ -19,7 +19,7 @@ class Constancia extends Model
         'archivo_url',
         'fecha_emision',
         'descripcion',
-        'descargada'
+        'descargada',
     ];
 
     protected $casts = [
@@ -55,7 +55,7 @@ class Constancia extends Model
 
         $numero = $lastConstancia ? intval(substr($lastConstancia->numero_folio, -6)) + 1 : 1;
 
-        return 'CONST-' . $year . '-' . str_pad($numero, 6, '0', STR_PAD_LEFT);
+        return 'CONST-'.$year.'-'.str_pad($numero, 6, '0', STR_PAD_LEFT);
     }
 
     // Boot method para generar folio automáticamente

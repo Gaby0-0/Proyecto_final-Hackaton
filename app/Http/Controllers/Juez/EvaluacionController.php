@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Juez;
 
 use App\Http\Controllers\Controller;
 use App\Models\Equipo;
-use App\Models\Evento;
 use App\Models\Evaluacion;
+use App\Models\Evento;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,19 +18,19 @@ class EvaluacionController extends Controller
 
         // Obtener eventos asignados al juez con equipos que tienen proyectos
         $eventosAsignados = $user->eventosAsignados()
-            ->with(['equiposAprobados' => function($query) {
+            ->with(['equiposAprobados' => function ($query) {
                 $query->withPivot([
                     'proyecto_titulo',
                     'proyecto_descripcion',
-                    'proyecto_final_url'
+                    'proyecto_final_url',
                 ]);
             }])
             ->orderBy('fecha_inicio', 'desc')
             ->get()
-            ->map(function($evento) use ($user) {
+            ->map(function ($evento) use ($user) {
                 // Filtrar solo equipos con proyecto
-                $equiposConProyecto = $evento->equiposAprobados->filter(function($equipo) {
-                    return !empty($equipo->pivot->proyecto_titulo);
+                $equiposConProyecto = $evento->equiposAprobados->filter(function ($equipo) {
+                    return ! empty($equipo->pivot->proyecto_titulo);
                 });
 
                 // Contar cuántos ha evaluado
@@ -53,7 +53,7 @@ class EvaluacionController extends Controller
         $user = Auth::user();
 
         // Verificar que el juez esté asignado a este evento
-        if (!$user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
+        if (! $user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
             return redirect()->route('juez.evaluaciones.index')
                 ->with('error', 'No tienes acceso a este evento');
         }
@@ -66,13 +66,13 @@ class EvaluacionController extends Controller
                 'proyecto_descripcion',
                 'avances',
                 'proyecto_final_url',
-                'fecha_entrega_final'
+                'fecha_entrega_final',
             ])
             ->get()
-            ->filter(function($equipo) {
-                return !empty($equipo->pivot->proyecto_titulo);
+            ->filter(function ($equipo) {
+                return ! empty($equipo->pivot->proyecto_titulo);
             })
-            ->map(function($equipo) use ($evento, $user) {
+            ->map(function ($equipo) use ($evento, $user) {
                 // Verificar si ya evaluó este equipo en este evento
                 $evaluacion = Evaluacion::where('evento_id', $evento->id)
                     ->where('equipo_id', $equipo->id)
@@ -80,6 +80,7 @@ class EvaluacionController extends Controller
                     ->first();
 
                 $equipo->evaluacion_existente = $evaluacion;
+
                 return $equipo;
             });
 
@@ -92,7 +93,7 @@ class EvaluacionController extends Controller
         $user = Auth::user();
 
         // Verificar que el juez esté asignado al evento
-        if (!$user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
+        if (! $user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
             return redirect()->route('juez.evaluaciones.index')
                 ->with('error', 'No tienes acceso a este evento');
         }
@@ -116,13 +117,19 @@ class EvaluacionController extends Controller
                 'proyecto_descripcion',
                 'avances',
                 'proyecto_final_url',
-                'fecha_entrega_final'
+                'fecha_entrega_final',
             ])
             ->first();
 
-        if (!$inscripcion || empty($inscripcion->pivot->proyecto_titulo)) {
+        if (! $inscripcion || empty($inscripcion->pivot->proyecto_titulo)) {
             return redirect()->route('juez.evaluaciones.evento', $evento)
                 ->with('error', 'Este equipo no tiene proyecto para evaluar');
+        }
+
+        // VALIDACIÓN CRÍTICA: Verificar que el equipo tenga su proyecto final subido
+        if (empty($inscripcion->pivot->proyecto_final_url)) {
+            return redirect()->route('juez.evaluaciones.evento', $evento)
+                ->with('error', 'Este equipo no ha subido su proyecto final. Solo se pueden evaluar proyectos con entrega final completada.');
         }
 
         $equipo->load('miembros');
@@ -142,7 +149,7 @@ class EvaluacionController extends Controller
         $user = Auth::user();
 
         // Verificar que el juez esté asignado al evento
-        if (!$user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
+        if (! $user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
             return redirect()->route('juez.evaluaciones.index')
                 ->with('error', 'No tienes acceso a este evento');
         }
@@ -156,6 +163,17 @@ class EvaluacionController extends Controller
         if ($evaluacionExistente) {
             return redirect()->route('juez.evaluaciones.evento', $evento)
                 ->with('error', 'Ya has evaluado este equipo.');
+        }
+
+        // VALIDACIÓN CRÍTICA: Verificar que el equipo tenga su proyecto final subido
+        $inscripcion = $equipo->eventos()
+            ->where('evento_id', $evento->id)
+            ->withPivot('proyecto_final_url')
+            ->first();
+
+        if (! $inscripcion || empty($inscripcion->pivot->proyecto_final_url)) {
+            return redirect()->route('juez.evaluaciones.evento', $evento)
+                ->with('error', 'Este equipo no ha subido su proyecto final. Solo se pueden evaluar proyectos con entrega final completada.');
         }
 
         $validated = $request->validate([
@@ -182,7 +200,7 @@ class EvaluacionController extends Controller
         ]);
 
         return redirect()->route('juez.evaluaciones.evento', $evento)
-            ->with('success', 'Evaluación guardada exitosamente para el equipo ' . $equipo->nombre);
+            ->with('success', 'Evaluación guardada exitosamente para el equipo '.$equipo->nombre);
     }
 
     // Editar evaluación existente
@@ -191,7 +209,7 @@ class EvaluacionController extends Controller
         $user = Auth::user();
 
         // Verificar que el juez esté asignado al evento
-        if (!$user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
+        if (! $user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
             return redirect()->route('juez.evaluaciones.index')
                 ->with('error', 'No tienes acceso a este evento');
         }
@@ -209,7 +227,7 @@ class EvaluacionController extends Controller
                 'proyecto_descripcion',
                 'avances',
                 'proyecto_final_url',
-                'fecha_entrega_final'
+                'fecha_entrega_final',
             ])
             ->first();
 
@@ -230,7 +248,7 @@ class EvaluacionController extends Controller
         $user = Auth::user();
 
         // Verificar que el juez esté asignado al evento
-        if (!$user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
+        if (! $user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
             return redirect()->route('juez.evaluaciones.index')
                 ->with('error', 'No tienes acceso a este evento');
         }
