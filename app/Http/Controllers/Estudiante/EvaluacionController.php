@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\Estudiante;
 
 use App\Http\Controllers\Controller;
-use App\Models\Evaluacion;
 use App\Models\Equipo;
-use Illuminate\Http\Request;
+use App\Models\Evaluacion;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class EvaluacionController extends Controller
 {
@@ -41,7 +39,7 @@ class EvaluacionController extends Controller
                         'evento' => $evento,
                         'evaluaciones' => $evaluaciones,
                         'promedio' => round($promedio, 2),
-                        'total_evaluaciones' => $evaluaciones->count()
+                        'total_evaluaciones' => $evaluaciones->count(),
                     ];
                 }
             }
@@ -58,7 +56,7 @@ class EvaluacionController extends Controller
         $user = Auth::user();
 
         // Verificar que el usuario pertenece al equipo
-        if (!$equipo->miembros->contains($user->id)) {
+        if (! $equipo->miembros->contains($user->id)) {
             return redirect()->route('estudiante.evaluaciones.index')
                 ->with('error', 'No tienes acceso a estas evaluaciones');
         }
@@ -97,7 +95,7 @@ class EvaluacionController extends Controller
             ->withPivot([
                 'proyecto_titulo',
                 'proyecto_descripcion',
-                'proyecto_final_url'
+                'proyecto_final_url',
             ])
             ->first();
 

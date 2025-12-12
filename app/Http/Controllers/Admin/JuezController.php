@@ -3,13 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Http\Requests\Admin\AsignarJuezAleatorioRequest;
+use App\Http\Requests\Admin\AsignarJuezManualRequest;
+use App\Http\Requests\Admin\DesasignarJuezRequest;
+use App\Http\Requests\Admin\StoreJuezRequest;
+use App\Http\Requests\Admin\UpdateJuezRequest;
 use App\Models\Equipo;
-use App\Models\Proyecto;
 use App\Models\Evento;
+use App\Models\Proyecto;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class JuezController extends Controller
 {
@@ -22,39 +27,39 @@ class JuezController extends Controller
 
         // Filtro por búsqueda
         if ($request->filled('buscar')) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->buscar . '%')
-                  ->orWhere('email', 'like', '%' . $request->buscar . '%')
-                  ->orWhereHas('datosJuez', function($subq) use ($request) {
-                      $subq->where('nombre_completo', 'like', '%' . $request->buscar . '%')
-                           ->orWhere('especialidad', 'like', '%' . $request->buscar . '%');
-                  });
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%'.$request->buscar.'%')
+                    ->orWhere('email', 'like', '%'.$request->buscar.'%')
+                    ->orWhereHas('datosJuez', function ($subq) use ($request) {
+                        $subq->where('nombre_completo', 'like', '%'.$request->buscar.'%')
+                            ->orWhere('especialidad', 'like', '%'.$request->buscar.'%');
+                    });
             });
         }
 
         // Filtro por especialidad
         if ($request->filled('especialidad')) {
-            $query->whereHas('datosJuez', function($q) use ($request) {
+            $query->whereHas('datosJuez', function ($q) use ($request) {
                 $q->where('especialidad', $request->especialidad);
             });
         }
 
         // Filtro por estado activo
         if ($request->filled('activo')) {
-            $query->whereHas('datosJuez', function($q) use ($request) {
+            $query->whereHas('datosJuez', function ($q) use ($request) {
                 $q->where('activo', $request->activo);
             });
         }
 
         $jueces = $query->withCount(['equiposAsignados', 'eventosAsignados'])
-                       ->orderBy('created_at', 'desc')
-                       ->paginate(10);
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
         // Obtener especialidades únicas para el filtro
         $especialidades = DB::table('jueces')
-                             ->whereNotNull('especialidad')
-                             ->distinct()
-                             ->pluck('especialidad');
+            ->whereNotNull('especialidad')
+            ->distinct()
+            ->pluck('especialidad');
 
         return view('admin.jueces.index', compact('jueces', 'especialidades'));
     }
@@ -70,19 +75,9 @@ class JuezController extends Controller
     /**
      * Store a newly created judge in storage.
      */
-    public function store(Request $request)
+    public function store(StoreJuezRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8|confirmed',
-            'nombre_completo' => 'required|string|max:255',
-            'especialidad' => 'required|string|max:255',
-            'cedula_profesional' => 'nullable|string|max:255',
-            'institucion' => 'nullable|string|max:255',
-            'experiencia' => 'nullable|string',
-            'telefono' => 'nullable|string|max:20',
-        ]);
+        $validated = $request->validated();
 
         DB::beginTransaction();
         try {
@@ -112,7 +107,8 @@ class JuezController extends Controller
                 ->with('success', 'Juez creado exitosamente y está activo para ser asignado a eventos');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error al crear el juez: ' . $e->getMessage())
+
+            return back()->with('error', 'Error al crear el juez: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -150,24 +146,14 @@ class JuezController extends Controller
     /**
      * Update the specified judge in storage.
      */
-    public function update(Request $request, User $juez)
+    public function update(UpdateJuezRequest $request, User $juez)
     {
         // Verificar que sea un juez
         if ($juez->role !== 'juez') {
             abort(404);
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $juez->id,
-            'nombre_completo' => 'nullable|string|max:255',
-            'especialidad' => 'nullable|string|max:255',
-            'cedula_profesional' => 'nullable|string|max:255',
-            'institucion' => 'nullable|string|max:255',
-            'experiencia' => 'nullable|string',
-            'telefono' => 'nullable|string|max:20',
-            'activo' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         DB::beginTransaction();
         try {
@@ -178,25 +164,35 @@ class JuezController extends Controller
             ];
 
             if ($request->filled('password')) {
-                $request->validate(['password' => 'min:8|confirmed']);
                 $updateData['password'] = Hash::make($request->password);
             }
 
             $juez->update($updateData);
 
             // Actualizar o crear datos del juez
+            $datosJuez = [
+                'nombre_completo' => $validated['nombre_completo'] ?? $validated['name'],
+                'cedula_profesional' => $validated['cedula_profesional'] ?? null,
+                'institucion' => $validated['institucion'] ?? null,
+                'experiencia' => $validated['experiencia'] ?? null,
+                'telefono' => $validated['telefono'] ?? null,
+                'activo' => $request->has('activo'),
+            ];
+
+            // Solo actualizar especialidad si está presente en el request validado
+            if (isset($validated['especialidad']) && ! empty($validated['especialidad'])) {
+                $datosJuez['especialidad'] = $validated['especialidad'];
+            }
+
+            // Determinar si la información está completa
+            // Obtener la especialidad actual o la nueva
+            $especialidadActual = $datosJuez['especialidad'] ?? $juez->datosJuez?->especialidad;
+            $nombreCompleto = $validated['nombre_completo'] ?? $validated['name'];
+            $datosJuez['informacion_completa'] = ! empty($nombreCompleto) && ! empty($especialidadActual);
+
             $juez->datosJuez()->updateOrCreate(
                 ['user_id' => $juez->id],
-                [
-                    'nombre_completo' => $validated['nombre_completo'] ?? $validated['name'],
-                    'especialidad' => $validated['especialidad'] ?? '',
-                    'cedula_profesional' => $validated['cedula_profesional'] ?? null,
-                    'institucion' => $validated['institucion'] ?? null,
-                    'experiencia' => $validated['experiencia'] ?? null,
-                    'telefono' => $validated['telefono'] ?? null,
-                    'activo' => $request->has('activo'),
-                    'informacion_completa' => !empty($validated['nombre_completo']) && !empty($validated['especialidad']),
-                ]
+                $datosJuez
             );
 
             DB::commit();
@@ -205,7 +201,8 @@ class JuezController extends Controller
                 ->with('success', 'Juez actualizado exitosamente');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error al actualizar el juez: ' . $e->getMessage())
+
+            return back()->with('error', 'Error al actualizar el juez: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -235,13 +232,13 @@ class JuezController extends Controller
 
         // Filtros
         if ($request->filled('categoria')) {
-            $query->whereHas('proyecto', function($q) use ($request) {
+            $query->whereHas('proyecto', function ($q) use ($request) {
                 $q->where('categoria', $request->categoria);
             });
         }
 
         if ($request->filled('evento_id')) {
-            $query->whereHas('eventos', function($q) use ($request) {
+            $query->whereHas('eventos', function ($q) use ($request) {
                 $q->where('eventos.id', $request->evento_id);
             });
         }
@@ -250,9 +247,9 @@ class JuezController extends Controller
 
         // Obtener jueces disponibles
         $jueces = User::where('role', 'juez')
-                     ->withCount('equiposAsignados')
-                     ->orderBy('equipos_asignados_count', 'asc')
-                     ->get();
+            ->withCount('equiposAsignados')
+            ->orderBy('equipos_asignados_count', 'asc')
+            ->get();
 
         // Obtener categorías únicas
         $categorias = Proyecto::distinct()->pluck('categoria');
@@ -266,13 +263,9 @@ class JuezController extends Controller
     /**
      * Assign judges to teams randomly based on project category.
      */
-    public function asignarAleatorio(Request $request)
+    public function asignarAleatorio(AsignarJuezAleatorioRequest $request)
     {
-        $validated = $request->validate([
-            'categoria' => 'nullable|string',
-            'evento_id' => 'nullable|exists:eventos,id',
-            'num_jueces' => 'required|integer|min:1|max:5',
-        ]);
+        $validated = $request->validated();
 
         DB::beginTransaction();
         try {
@@ -280,13 +273,13 @@ class JuezController extends Controller
             $query = Equipo::with('proyecto');
 
             if ($request->filled('categoria')) {
-                $query->whereHas('proyecto', function($q) use ($request) {
+                $query->whereHas('proyecto', function ($q) use ($request) {
                     $q->where('categoria', $request->categoria);
                 });
             }
 
             if ($request->filled('evento_id')) {
-                $query->whereHas('eventos', function($q) use ($request) {
+                $query->whereHas('eventos', function ($q) use ($request) {
                     $q->where('eventos.id', $request->evento_id);
                 });
             }
@@ -299,9 +292,9 @@ class JuezController extends Controller
 
             // Obtener jueces disponibles ordenados por carga de trabajo
             $jueces = User::where('role', 'juez')
-                         ->withCount('equiposAsignados')
-                         ->orderBy('equipos_asignados_count', 'asc')
-                         ->get();
+                ->withCount('equiposAsignados')
+                ->orderBy('equipos_asignados_count', 'asc')
+                ->get();
 
             if ($jueces->isEmpty()) {
                 return back()->with('error', 'No hay jueces disponibles para asignar');
@@ -315,8 +308,8 @@ class JuezController extends Controller
                 $juecesAsignados = $equipo->jueces->pluck('id')->toArray();
 
                 // Seleccionar jueces que no estén ya asignados a este equipo
-                $juecesDisponibles = $jueces->filter(function($juez) use ($juecesAsignados) {
-                    return !in_array($juez->id, $juecesAsignados);
+                $juecesDisponibles = $jueces->filter(function ($juez) use ($juecesAsignados) {
+                    return ! in_array($juez->id, $juecesAsignados);
                 });
 
                 // Si no hay suficientes jueces disponibles, usar todos
@@ -330,11 +323,11 @@ class JuezController extends Controller
                 foreach ($juecesSeleccionados as $juez) {
                     // Verificar si ya está asignado
                     $yaAsignado = DB::table('juez_equipo')
-                                   ->where('juez_id', $juez->id)
-                                   ->where('equipo_id', $equipo->id)
-                                   ->exists();
+                        ->where('juez_id', $juez->id)
+                        ->where('equipo_id', $equipo->id)
+                        ->exists();
 
-                    if (!$yaAsignado) {
+                    if (! $yaAsignado) {
                         DB::table('juez_equipo')->insert([
                             'juez_id' => $juez->id,
                             'equipo_id' => $equipo->id,
@@ -349,9 +342,9 @@ class JuezController extends Controller
 
                 // Actualizar el contador de asignaciones para balancear la carga
                 $jueces = User::where('role', 'juez')
-                             ->withCount('equiposAsignados')
-                             ->orderBy('equipos_asignados_count', 'asc')
-                             ->get();
+                    ->withCount('equiposAsignados')
+                    ->orderBy('equipos_asignados_count', 'asc')
+                    ->get();
             }
 
             DB::commit();
@@ -361,19 +354,17 @@ class JuezController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error al asignar jueces: ' . $e->getMessage());
+
+            return back()->with('error', 'Error al asignar jueces: '.$e->getMessage());
         }
     }
 
     /**
      * Assign a specific judge to a specific team.
      */
-    public function asignarManual(Request $request)
+    public function asignarManual(AsignarJuezManualRequest $request)
     {
-        $validated = $request->validate([
-            'juez_id' => 'required|exists:users,id',
-            'equipo_id' => 'required|exists:equipos,id',
-        ]);
+        $validated = $request->validated();
 
         // Verificar que el usuario sea un juez
         $juez = User::findOrFail($validated['juez_id']);
@@ -383,9 +374,9 @@ class JuezController extends Controller
 
         // Verificar si ya está asignado
         $yaAsignado = DB::table('juez_equipo')
-                       ->where('juez_id', $validated['juez_id'])
-                       ->where('equipo_id', $validated['equipo_id'])
-                       ->exists();
+            ->where('juez_id', $validated['juez_id'])
+            ->where('equipo_id', $validated['equipo_id'])
+            ->exists();
 
         if ($yaAsignado) {
             return back()->with('error', 'Este juez ya está asignado a este equipo');
@@ -406,17 +397,14 @@ class JuezController extends Controller
     /**
      * Remove a judge assignment from a team.
      */
-    public function desasignar(Request $request)
+    public function desasignar(DesasignarJuezRequest $request)
     {
-        $validated = $request->validate([
-            'juez_id' => 'required|exists:users,id',
-            'equipo_id' => 'required|exists:equipos,id',
-        ]);
+        $validated = $request->validated();
 
         DB::table('juez_equipo')
-          ->where('juez_id', $validated['juez_id'])
-          ->where('equipo_id', $validated['equipo_id'])
-          ->delete();
+            ->where('juez_id', $validated['juez_id'])
+            ->where('equipo_id', $validated['equipo_id'])
+            ->delete();
 
         return back()->with('success', 'Juez desasignado exitosamente');
     }

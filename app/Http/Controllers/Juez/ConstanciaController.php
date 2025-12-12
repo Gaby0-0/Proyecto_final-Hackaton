@@ -4,10 +4,9 @@ namespace App\Http\Controllers\Juez;
 
 use App\Http\Controllers\Controller;
 use App\Models\Constancia;
-use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class ConstanciaController extends Controller
 {
@@ -58,7 +57,7 @@ class ConstanciaController extends Controller
 
         // Si ya existe archivo generado, descargarlo
         if ($constancia->archivo_url && Storage::disk('public')->exists($constancia->archivo_url)) {
-            return Storage::disk('public')->download($constancia->archivo_url, 'Constancia-' . $constancia->numero_folio . '.pdf');
+            return Storage::disk('public')->download($constancia->archivo_url, 'Constancia-'.$constancia->numero_folio.'.pdf');
         }
 
         // Si no existe archivo, generar PDF
@@ -78,8 +77,8 @@ class ConstanciaController extends Controller
         $pdf->setPaper('letter', 'landscape');
 
         // Guardar el PDF en storage
-        $filename = 'constancia-' . $constancia->numero_folio . '.pdf';
-        $filepath = 'constancias/' . $filename;
+        $filename = 'constancia-'.$constancia->numero_folio.'.pdf';
+        $filepath = 'constancias/'.$filename;
 
         Storage::disk('public')->put($filepath, $pdf->output());
 

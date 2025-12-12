@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Evento;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class EventoSeeder extends Seeder
 {
@@ -23,7 +22,7 @@ class EventoSeeder extends Seeder
             'estado' => 'activo',
             'tipo' => 'hackathon',
             'max_equipos' => 30,
-            'modalidad' => 'hibrida'
+            'modalidad' => 'hibrida',
         ]);
 
         // Evento 2: Feria de Proyectos Programada
@@ -35,7 +34,7 @@ class EventoSeeder extends Seeder
             'estado' => 'programado',
             'tipo' => 'feria',
             'max_equipos' => 50,
-            'modalidad' => 'presencial'
+            'modalidad' => 'presencial',
         ]);
     }
 }

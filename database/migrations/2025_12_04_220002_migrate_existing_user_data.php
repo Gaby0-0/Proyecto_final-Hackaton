@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -21,7 +19,7 @@ return new class extends Migration
             // Solo insertar si no existe ya un registro
             $exists = DB::table('jueces')->where('user_id', $juez->id)->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 DB::table('jueces')->insert([
                     'user_id' => $juez->id,
                     'nombre_completo' => $juez->nombre_completo ?? $juez->name,
@@ -43,7 +41,7 @@ return new class extends Migration
             // Solo insertar si no existe ya un registro
             $exists = DB::table('administradores')->where('user_id', $admin->id)->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 DB::table('administradores')->insert([
                     'user_id' => $admin->id,
                     'nombre_completo' => $admin->nombre_completo ?? $admin->name,

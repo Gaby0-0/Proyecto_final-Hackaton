@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Juez;
 
 use App\Http\Controllers\Controller;
-use App\Models\Evento;
 use App\Models\Equipo;
-use Illuminate\Http\Request;
+use App\Models\Evento;
 use Illuminate\Support\Facades\Auth;
 
 class EventoController extends Controller
@@ -30,7 +29,7 @@ class EventoController extends Controller
         $user = Auth::user();
 
         // Verificar que el juez esté asignado a este evento
-        if (!$user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
+        if (! $user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
             return redirect()->route('juez.eventos.index')
                 ->with('error', 'No tienes acceso a este evento');
         }
@@ -45,11 +44,11 @@ class EventoController extends Controller
                 'avances',
                 'proyecto_final_url',
                 'fecha_entrega_final',
-                'notas_equipo'
+                'notas_equipo',
             ])
             ->get()
-            ->map(function ($equipo) use ($evento) {
-                $tieneProyecto = !empty($equipo->pivot->proyecto_titulo) && !empty($equipo->pivot->proyecto_descripcion);
+            ->map(function ($equipo) {
+                $tieneProyecto = ! empty($equipo->pivot->proyecto_titulo) && ! empty($equipo->pivot->proyecto_descripcion);
 
                 // Decodificar avances
                 $avances = [];
@@ -73,8 +72,8 @@ class EventoController extends Controller
             });
 
         // Separar equipos con y sin proyecto
-        $equiposConProyecto = $equipos->filter(fn($e) => $e['tieneProyecto']);
-        $equiposSinProyecto = $equipos->filter(fn($e) => !$e['tieneProyecto']);
+        $equiposConProyecto = $equipos->filter(fn ($e) => $e['tieneProyecto']);
+        $equiposSinProyecto = $equipos->filter(fn ($e) => ! $e['tieneProyecto']);
 
         return view('juez.eventos.show', compact('evento', 'equiposConProyecto', 'equiposSinProyecto'));
     }
@@ -85,7 +84,7 @@ class EventoController extends Controller
         $user = Auth::user();
 
         // Verificar que el juez esté asignado a este evento
-        if (!$user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
+        if (! $user->eventosAsignados()->where('evento_id', $evento->id)->exists()) {
             return redirect()->route('juez.eventos.index')
                 ->with('error', 'No tienes acceso a este evento');
         }
@@ -100,11 +99,11 @@ class EventoController extends Controller
                 'avances',
                 'proyecto_final_url',
                 'fecha_entrega_final',
-                'notas_equipo'
+                'notas_equipo',
             ])
             ->first();
 
-        if (!$inscripcion) {
+        if (! $inscripcion) {
             return redirect()->route('juez.eventos.show', $evento)
                 ->with('error', 'Este equipo no está inscrito en el evento');
         }

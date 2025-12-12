@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +19,7 @@ class Evaluacion extends Model
         'criterio_funcionalidad',
         'criterio_presentacion',
         'criterio_impacto',
-        'criterio_tecnico'
+        'criterio_tecnico',
     ];
 
     protected $casts = [

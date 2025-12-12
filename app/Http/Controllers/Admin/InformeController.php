@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\EnviarInformeEmailRequest;
 use App\Mail\InformeGeneralMail;
 use App\Models\Constancia;
 use App\Models\Equipo;
 use App\Models\Evaluacion;
 use App\Models\Evento;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -268,11 +268,9 @@ class InformeController extends Controller
     }
 
     // Enviar informe general por correo
-    public function enviarInformeEmail(Request $request)
+    public function enviarInformeEmail(EnviarInformeEmailRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-        ]);
+        $validated = $request->validated();
 
         // Recopilar datos del informe
         $datos = [
@@ -295,8 +293,8 @@ class InformeController extends Controller
         ];
 
         // Enviar correo
-        Mail::to($request->email)->send(new InformeGeneralMail($datos));
+        Mail::to($validated['email'])->send(new InformeGeneralMail($datos));
 
-        return back()->with('success', "Informe enviado exitosamente a {$request->email}");
+        return back()->with('success', "Informe enviado exitosamente a {$validated['email']}");
     }
 }

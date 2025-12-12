@@ -39,9 +39,9 @@ $pageActions = '<a href="' . route('admin.jueces.edit', $juez->id) . '" class="i
         <div>
             <label class="block text-sm font-medium text-gray-500 mb-1">Especialidad</label>
             <p class="text-base text-gray-900">
-                @if($juez->especialidad)
+                @if($juez->datosJuez?->especialidad)
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {{ $juez->especialidad }}
+                        {{ $juez->datosJuez->especialidad }}
                     </span>
                 @else
                     <span class="text-gray-400">No especificada</span>
@@ -52,7 +52,7 @@ $pageActions = '<a href="' . route('admin.jueces.edit', $juez->id) . '" class="i
         <div>
             <label class="block text-sm font-medium text-gray-500 mb-1">Estado</label>
             <p class="text-base text-gray-900">
-                @if($juez->activo)
+                @if($juez->datosJuez?->activo)
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         <i class="fas fa-check-circle mr-1"></i> Activo
                     </span>

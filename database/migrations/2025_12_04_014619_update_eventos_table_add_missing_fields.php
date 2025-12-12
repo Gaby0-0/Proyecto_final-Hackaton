@@ -13,19 +13,19 @@ return new class extends Migration
     {
         Schema::table('eventos', function (Blueprint $table) {
             // Agregar columnas si no existen
-            if (!Schema::hasColumn('eventos', 'descripcion')) {
+            if (! Schema::hasColumn('eventos', 'descripcion')) {
                 $table->text('descripcion')->nullable();
             }
-            if (!Schema::hasColumn('eventos', 'tipo')) {
+            if (! Schema::hasColumn('eventos', 'tipo')) {
                 $table->string('tipo')->nullable();
             }
-            if (!Schema::hasColumn('eventos', 'estado')) {
+            if (! Schema::hasColumn('eventos', 'estado')) {
                 $table->string('estado')->default('activo');
             }
-            if (!Schema::hasColumn('eventos', 'max_equipos')) {
+            if (! Schema::hasColumn('eventos', 'max_equipos')) {
                 $table->integer('max_equipos')->default(50);
             }
-            if (!Schema::hasColumn('eventos', 'modalidad')) {
+            if (! Schema::hasColumn('eventos', 'modalidad')) {
                 $table->string('modalidad')->default('presencial');
             }
         });

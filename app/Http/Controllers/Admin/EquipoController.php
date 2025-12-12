@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreEquipoRequest;
+use App\Http\Requests\Admin\UpdateEquipoRequest;
 use App\Models\Equipo;
 use App\Models\Proyecto;
 use App\Models\User;
@@ -16,7 +18,7 @@ class EquipoController extends Controller
 
         // Filtros
         if ($request->filled('search')) {
-            $query->where('nombre', 'like', '%' . $request->search . '%');
+            $query->where('nombre', 'like', '%'.$request->search.'%');
         }
 
         if ($request->filled('proyecto')) {
@@ -37,17 +39,9 @@ class EquipoController extends Controller
         return view('admin.equipos.create', compact('proyectos', 'usuarios'));
     }
 
-    public function store(Request $request)
+    public function store(StoreEquipoRequest $request)
     {
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'proyecto_id' => 'nullable|exists:proyectos,id',
-            'descripcion' => 'nullable|string',
-            'max_integrantes' => 'required|integer|min:2|max:20',
-            'lider_id' => 'nullable|exists:users,id',
-            'miembros' => 'nullable|array',
-            'miembros.*' => 'exists:users,id',
-        ]);
+        $validated = $request->validated();
 
         $equipo = Equipo::create([
             'nombre' => $validated['nombre'],
@@ -57,12 +51,12 @@ class EquipoController extends Controller
         ]);
 
         // Asignar líder si se especificó
-        if (!empty($validated['lider_id'])) {
+        if (! empty($validated['lider_id'])) {
             $equipo->miembros()->attach($validated['lider_id'], ['rol_equipo' => 'lider']);
         }
 
         // Asignar miembros
-        if (!empty($validated['miembros'])) {
+        if (! empty($validated['miembros'])) {
             foreach ($validated['miembros'] as $miembroId) {
                 // No duplicar si ya es líder
                 if ($miembroId != $validated['lider_id']) {
@@ -91,17 +85,9 @@ class EquipoController extends Controller
         return view('admin.equipos.edit', compact('equipo', 'proyectos', 'usuarios'));
     }
 
-    public function update(Request $request, Equipo $equipo)
+    public function update(UpdateEquipoRequest $request, Equipo $equipo)
     {
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'proyecto_id' => 'nullable|exists:proyectos,id',
-            'descripcion' => 'nullable|string',
-            'max_integrantes' => 'required|integer|min:2|max:20',
-            'lider_id' => 'nullable|exists:users,id',
-            'miembros' => 'nullable|array',
-            'miembros.*' => 'exists:users,id',
-        ]);
+        $validated = $request->validated();
 
         $equipo->update([
             'nombre' => $validated['nombre'],
@@ -114,12 +100,12 @@ class EquipoController extends Controller
         $equipo->miembros()->detach(); // Remover todos
 
         // Asignar líder
-        if (!empty($validated['lider_id'])) {
+        if (! empty($validated['lider_id'])) {
             $equipo->miembros()->attach($validated['lider_id'], ['rol_equipo' => 'lider']);
         }
 
         // Asignar miembros
-        if (!empty($validated['miembros'])) {
+        if (! empty($validated['miembros'])) {
             foreach ($validated['miembros'] as $miembroId) {
                 if ($miembroId != $validated['lider_id']) {
                     $equipo->miembros()->attach($miembroId, ['rol_equipo' => 'miembro']);

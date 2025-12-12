@@ -46,4 +46,24 @@ class StoreJuezRequest extends FormRequest
             'telefono.regex' => 'El teléfono solo puede contener números, guiones, paréntesis y espacios.',
         ];
     }
+
+    /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'name' => 'nombre de usuario',
+            'email' => 'correo electrónico',
+            'password' => 'contraseña',
+            'nombre_completo' => 'nombre completo',
+            'especialidad' => 'especialidad',
+            'cedula_profesional' => 'cédula profesional',
+            'institucion' => 'institución',
+            'experiencia' => 'experiencia',
+            'telefono' => 'teléfono',
+        ];
+    }
 }

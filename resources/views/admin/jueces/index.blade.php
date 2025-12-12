@@ -108,9 +108,9 @@ $pageActions = '<a href="' . route('admin.jueces.create') . '" class="inline-fle
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        @if($juez->especialidad)
+                        @if($juez->datosJuez?->especialidad)
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {{ $juez->especialidad }}
+                                {{ $juez->datosJuez->especialidad }}
                             </span>
                         @else
                             <span class="text-sm text-gray-400 italic">Sin especialidad</span>
@@ -127,7 +127,7 @@ $pageActions = '<a href="' . route('admin.jueces.create') . '" class="inline-fle
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-center">
-                        @if($juez->activo)
+                        @if($juez->datosJuez?->activo)
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 <i class="fas fa-check-circle mr-1"></i> Activo
                             </span>

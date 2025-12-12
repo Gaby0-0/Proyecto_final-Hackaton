@@ -4,10 +4,9 @@ namespace App\Http\Controllers\Estudiante;
 
 use App\Http\Controllers\Controller;
 use App\Models\Constancia;
-use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class ConstanciaController extends Controller
 {
@@ -59,12 +58,12 @@ class ConstanciaController extends Controller
         // Marcar como descargada
         $constancia->marcarDescargada();
 
-          $constancia->load(['evento', 'equipo', 'usuario']);
-    $html = $this->generarHTMLConstancia($constancia);
+        $constancia->load(['evento', 'equipo', 'usuario']);
+        $html = $this->generarHTMLConstancia($constancia);
 
-    $pdf = Pdf::loadHTML($html)->setPaper('letter', 'portrait');
+        $pdf = Pdf::loadHTML($html)->setPaper('letter', 'portrait');
 
-    return $pdf->stream('Constancia-' . $constancia->numero_folio . '.pdf', ['Attachment' => true]);
+        return $pdf->stream('Constancia-'.$constancia->numero_folio.'.pdf', ['Attachment' => true]);
 
     }
 
@@ -81,8 +80,8 @@ class ConstanciaController extends Controller
         $pdf->setPaper('letter', 'landscape');
 
         // Guardar el PDF en storage si no existe
-        $filename = 'constancia-' . $constancia->numero_folio . '.pdf';
-        $filepath = 'constancias/' . $filename;
+        $filename = 'constancia-'.$constancia->numero_folio.'.pdf';
+        $filepath = 'constancias/'.$filename;
 
         Storage::disk('public')->put($filepath, $pdf->output());
 
@@ -94,50 +93,50 @@ class ConstanciaController extends Controller
     }
 
     // Generar HTML de la constancia
-            private function generarHTMLConstancia(Constancia $constancia)
-        {
-            $tipoTexto = match($constancia->tipo) {
-                'ganador' => 'GANADOR',
-                'juez' => 'JUEZ EVALUADOR',
-                default => 'PARTICIPANTE'
+    private function generarHTMLConstancia(Constancia $constancia)
+    {
+        $tipoTexto = match ($constancia->tipo) {
+            'ganador' => 'GANADOR',
+            'juez' => 'JUEZ EVALUADOR',
+            default => 'PARTICIPANTE'
+        };
+
+        $lugarTexto = '';
+
+        if ($constancia->tipo === 'ganador' && $constancia->lugar) {
+            $lugarTexto = match ($constancia->lugar) {
+                1 => '1er LUGAR',
+                2 => '2do LUGAR',
+                3 => '3er LUGAR',
+                default => ''
             };
+        }
 
-            $lugarTexto = '';
+        $bloqueLugar = $lugarTexto
+            ? "<div class=\"lugar\">{$lugarTexto}</div>"
+            : '';
 
-            if ($constancia->tipo === 'ganador' && $constancia->lugar) {
-                $lugarTexto = match($constancia->lugar) {
-                    1 => '1er LUGAR',
-                    2 => '2do LUGAR',
-                    3 => '3er LUGAR',
-                    default => ''
-                };
-            }
+        $descripcionParticipacion =
+            $constancia->tipo === 'ganador'
+                ? 'destacada participación como ganador'
+                : ($constancia->tipo === 'juez'
+                    ? 'valiosa labor como juez evaluador'
+                    : 'valiosa participación'
+                );
 
-            $bloqueLugar = $lugarTexto
-                ? "<div class=\"lugar\">{$lugarTexto}</div>"
-                : "";
+        $textoEquipo = $constancia->equipo
+            ? "Como miembro del equipo: {$constancia->equipo->nombre}"
+            : 'Como juez evaluador del evento';
 
-            $descripcionParticipacion =
-                $constancia->tipo === 'ganador'
-                    ? 'destacada participación como ganador'
-                    : ($constancia->tipo === 'juez'
-                        ? 'valiosa labor como juez evaluador'
-                        : 'valiosa participación'
-                    );
+        $bloqueProyecto = $constancia->proyecto_nombre
+            ? "<div class=\"proyecto\">Proyecto: {$constancia->proyecto_nombre}</div>"
+            : '';
 
-            $textoEquipo = $constancia->equipo
-                ? "Como miembro del equipo: {$constancia->equipo->nombre}"
-                : "Como juez evaluador del evento";
+        $fechaEmision = $constancia->fecha_emision
+            ->locale('es')
+            ->isoFormat('D [de] MMMM [de] YYYY');
 
-            $bloqueProyecto = $constancia->proyecto_nombre
-                ? "<div class=\"proyecto\">Proyecto: {$constancia->proyecto_nombre}</div>"
-                : "";
-
-            $fechaEmision = $constancia->fecha_emision
-                ->locale('es')
-                ->isoFormat('D [de] MMMM [de] YYYY');
-
-            return <<<HTML
+        return <<<HTML
             <!DOCTYPE html>
             <html>
             <head>
@@ -282,6 +281,5 @@ class ConstanciaController extends Controller
             </body>
             </html>
             HTML;
-            }
-
+    }
 }

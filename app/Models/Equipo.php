@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ class Equipo extends Model
         'proyecto_id',
         'descripcion',
         'max_integrantes',
-        'activo'
+        'activo',
     ];
 
     protected $casts = [
@@ -28,33 +29,33 @@ class Equipo extends Model
     public function miembros()
     {
         return $this->belongsToMany(User::class, 'equipo_user')
-                    ->withPivot('rol_equipo', 'rol_especifico')
-                    ->withTimestamps();
+            ->withPivot('rol_equipo', 'rol_especifico')
+            ->withTimestamps();
     }
 
     // Obtener solo el líder del equipo
     public function lider()
     {
         return $this->belongsToMany(User::class, 'equipo_user')
-                    ->wherePivot('rol_equipo', 'lider')
-                    ->withTimestamps();
+            ->wherePivot('rol_equipo', 'lider')
+            ->withTimestamps();
     }
 
     // Relación muchos a muchos con eventos (convocatorias)
     public function eventos()
     {
         return $this->belongsToMany(Evento::class, 'equipo_evento')
-                    ->withPivot([
-                        'estado',
-                        'fecha_inscripcion',
-                        'proyecto_titulo',
-                        'proyecto_descripcion',
-                        'avances',
-                        'proyecto_final_url',
-                        'fecha_entrega_final',
-                        'notas_equipo'
-                    ])
-                    ->withTimestamps();
+            ->withPivot([
+                'estado',
+                'fecha_inscripcion',
+                'proyecto_titulo',
+                'proyecto_descripcion',
+                'avances',
+                'proyecto_final_url',
+                'fecha_entrega_final',
+                'notas_equipo',
+            ])
+            ->withTimestamps();
     }
 
     // Relación con evaluaciones
@@ -67,8 +68,8 @@ class Equipo extends Model
     public function jueces()
     {
         return $this->belongsToMany(User::class, 'juez_equipo', 'equipo_id', 'juez_id')
-                    ->withPivot('estado', 'fecha_asignacion')
-                    ->withTimestamps();
+            ->withPivot('estado', 'fecha_asignacion')
+            ->withTimestamps();
     }
 
     // Verificar si el equipo está lleno
@@ -86,7 +87,7 @@ class Equipo extends Model
         }
 
         // Verificar si el equipo está lleno
-        return !$this->estaLleno();
+        return ! $this->estaLleno();
     }
 
     // Generar código único para el equipo
@@ -115,7 +116,7 @@ class Equipo extends Model
     public function puedeInscribirseAEvento(Evento $evento)
     {
         // Si el evento no tiene categoría, permitir inscripción
-        if (!$evento->categoria) {
+        if (! $evento->categoria) {
             return true;
         }
 
@@ -160,11 +161,11 @@ class Equipo extends Model
             ->withPivot('proyecto_titulo', 'proyecto_descripcion')
             ->first();
 
-        if (!$evento) {
+        if (! $evento) {
             return false;
         }
 
-        return !empty($evento->pivot->proyecto_titulo) && !empty($evento->pivot->proyecto_descripcion);
+        return ! empty($evento->pivot->proyecto_titulo) && ! empty($evento->pivot->proyecto_descripcion);
     }
 
     // Obtener el proyecto de un evento específico
@@ -178,7 +179,7 @@ class Equipo extends Model
                 'avances',
                 'proyecto_final_url',
                 'fecha_entrega_final',
-                'notas_equipo'
+                'notas_equipo',
             ])
             ->first();
     }

@@ -204,7 +204,11 @@ $breadcrumbs = [
                         <option value="">Seleccionar juez...</option>
                         @foreach($jueces as $juez)
                             <option value="{{ $juez->id }}">
-                                {{ $juez->name }} ({{ $juez->equipos_asignados_count }} equipos)
+                                {{ $juez->name }}
+                                @if($juez->datosJuez?->especialidad)
+                                    - {{ $juez->datosJuez->especialidad }}
+                                @endif
+                                ({{ $juez->equipos_asignados_count }} equipos)
                             </option>
                         @endforeach
                     </select>
@@ -221,7 +225,12 @@ $breadcrumbs = [
                 <div class="flex flex-wrap gap-2">
                     @foreach($equipo->jueces as $juez)
                     <div class="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-800 rounded-full">
-                        <span class="text-sm">{{ $juez->name }}</span>
+                        <span class="text-sm">
+                            {{ $juez->name }}
+                            @if($juez->datosJuez?->especialidad)
+                                <span class="text-xs text-purple-600">({{ $juez->datosJuez->especialidad }})</span>
+                            @endif
+                        </span>
                         <form action="{{ route('admin.jueces.desasignar') }}" method="POST" class="inline" onsubmit="return confirm('¿Desasignar este juez?')">
                             @csrf
                             <input type="hidden" name="juez_id" value="{{ $juez->id }}">

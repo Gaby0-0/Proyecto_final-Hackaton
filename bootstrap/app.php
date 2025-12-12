@@ -3,12 +3,21 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function () {
+            // Binding personalizado para jueces - debe resolver al modelo User, no Juez
+            Route::bind('juez', function (string $value) {
+                return \App\Models\User::where('id', $value)
+                    ->where('role', 'juez')
+                    ->firstOrFail();
+            });
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([

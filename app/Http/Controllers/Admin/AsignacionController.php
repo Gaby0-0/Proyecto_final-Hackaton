@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Http\Requests\Admin\AsignarJuezAleatorioRequest;
+use App\Http\Requests\Admin\AsignarJuezManualRequest;
+use App\Http\Requests\Admin\DesasignarJuezRequest;
+use App\Http\Requests\Admin\LimpiarAsignacionesRequest;
 use App\Models\Equipo;
 use App\Models\Proyecto;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +22,7 @@ class AsignacionController extends Controller
 
         // Filtrar por categoría
         if ($request->filled('categoria')) {
-            $query->whereHas('proyecto', function($q) use ($request) {
+            $query->whereHas('proyecto', function ($q) use ($request) {
                 $q->where('categoria', $request->categoria);
             });
         }
@@ -30,8 +34,8 @@ class AsignacionController extends Controller
 
         // Obtener todas las categorías disponibles
         $categorias = Proyecto::whereNotNull('categoria')
-                              ->distinct()
-                              ->pluck('categoria');
+            ->distinct()
+            ->pluck('categoria');
 
         // Obtener todos los jueces
         $jueces = User::where('role', 'juez')->get();
@@ -52,21 +56,18 @@ class AsignacionController extends Controller
     }
 
     // Asignar jueces de manera aleatoria por categoría
-    public function asignarAleatorio(Request $request)
+    public function asignarAleatorio(AsignarJuezAleatorioRequest $request)
     {
-        $validated = $request->validate([
-            'categoria' => 'nullable|string',
-            'num_jueces_por_equipo' => 'required|integer|min:1|max:10'
-        ]);
+        $validated = $request->validated();
 
         $numJueces = $validated['num_jueces_por_equipo'];
 
         // Obtener equipos según la categoría
         $equiposQuery = Equipo::whereNotNull('proyecto_id')
-                              ->with('proyecto');
+            ->with('proyecto');
 
         if ($request->filled('categoria')) {
-            $equiposQuery->whereHas('proyecto', function($q) use ($request) {
+            $equiposQuery->whereHas('proyecto', function ($q) use ($request) {
                 $q->where('categoria', $request->categoria);
             });
         }
@@ -81,7 +82,7 @@ class AsignacionController extends Controller
         $jueces = User::where('role', 'juez')->get();
 
         if ($jueces->count() < $numJueces) {
-            return redirect()->back()->with('error', 'No hay suficientes jueces disponibles. Se requieren al menos ' . $numJueces . ' jueces.');
+            return redirect()->back()->with('error', 'No hay suficientes jueces disponibles. Se requieren al menos '.$numJueces.' jueces.');
         }
 
         $asignacionesRealizadas = 0;
@@ -106,7 +107,7 @@ class AsignacionController extends Controller
                         // Asignar juez al equipo
                         $equipo->jueces()->attach($juez->id, [
                             'estado' => 'asignado',
-                            'fecha_asignacion' => now()
+                            'fecha_asignacion' => now(),
                         ]);
                         $asignacionesRealizadas++;
                     }
@@ -119,17 +120,15 @@ class AsignacionController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Error al asignar jueces: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Error al asignar jueces: '.$e->getMessage());
         }
     }
 
     // Asignar un juez manualmente a un equipo
-    public function asignarManual(Request $request)
+    public function asignarManual(AsignarJuezManualRequest $request)
     {
-        $validated = $request->validate([
-            'juez_id' => 'required|exists:users,id',
-            'equipo_id' => 'required|exists:equipos,id'
-        ]);
+        $validated = $request->validated();
 
         // Verificar que el usuario sea un juez
         $juez = User::findOrFail($validated['juez_id']);
@@ -139,7 +138,7 @@ class AsignacionController extends Controller
 
         // Verificar que el equipo tenga proyecto
         $equipo = Equipo::findOrFail($validated['equipo_id']);
-        if (!$equipo->proyecto_id) {
+        if (! $equipo->proyecto_id) {
             return redirect()->back()->with('error', 'El equipo no tiene un proyecto asignado.');
         }
 
@@ -151,23 +150,20 @@ class AsignacionController extends Controller
         try {
             $equipo->jueces()->attach($juez->id, [
                 'estado' => 'asignado',
-                'fecha_asignacion' => now()
+                'fecha_asignacion' => now(),
             ]);
 
             return redirect()->back()->with('success', "Juez {$juez->name} asignado exitosamente al equipo {$equipo->nombre}.");
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error al asignar juez: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error al asignar juez: '.$e->getMessage());
         }
     }
 
     // Desasignar un juez de un equipo
-    public function desasignar(Request $request)
+    public function desasignar(DesasignarJuezRequest $request)
     {
-        $validated = $request->validate([
-            'juez_id' => 'required|exists:users,id',
-            'equipo_id' => 'required|exists:equipos,id'
-        ]);
+        $validated = $request->validated();
 
         $equipo = Equipo::findOrFail($validated['equipo_id']);
         $juez = User::findOrFail($validated['juez_id']);
@@ -178,21 +174,19 @@ class AsignacionController extends Controller
             return redirect()->back()->with('success', "Juez {$juez->name} desasignado exitosamente del equipo {$equipo->nombre}.");
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error al desasignar juez: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error al desasignar juez: '.$e->getMessage());
         }
     }
 
     // Limpiar todas las asignaciones
-    public function limpiarAsignaciones(Request $request)
+    public function limpiarAsignaciones(LimpiarAsignacionesRequest $request)
     {
-        $validated = $request->validate([
-            'categoria' => 'nullable|string'
-        ]);
+        $validated = $request->validated();
 
         try {
             if ($request->filled('categoria')) {
                 // Limpiar solo asignaciones de equipos con esa categoría
-                $equiposIds = Equipo::whereHas('proyecto', function($q) use ($request) {
+                $equiposIds = Equipo::whereHas('proyecto', function ($q) use ($request) {
                     $q->where('categoria', $request->categoria);
                 })->pluck('id');
 
@@ -204,11 +198,12 @@ class AsignacionController extends Controller
             } else {
                 // Limpiar todas las asignaciones
                 DB::table('juez_equipo')->truncate();
+
                 return redirect()->back()->with('success', 'Todas las asignaciones han sido limpiadas exitosamente.');
             }
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error al limpiar asignaciones: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error al limpiar asignaciones: '.$e->getMessage());
         }
     }
 

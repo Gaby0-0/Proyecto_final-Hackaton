@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('eventos')) {
+        if (! Schema::hasTable('eventos')) {
             Schema::create('eventos', function (Blueprint $table) {
                 $table->id();
                 $table->string('nombre');
@@ -28,10 +28,10 @@ return new class extends Migration
         } else {
             // Agregar columnas faltantes si la tabla ya existe
             Schema::table('eventos', function (Blueprint $table) {
-                if (!Schema::hasColumn('eventos', 'fecha_inicio')) {
+                if (! Schema::hasColumn('eventos', 'fecha_inicio')) {
                     $table->datetime('fecha_inicio')->nullable();
                 }
-                if (!Schema::hasColumn('eventos', 'fecha_fin')) {
+                if (! Schema::hasColumn('eventos', 'fecha_fin')) {
                     $table->datetime('fecha_fin')->nullable();
                 }
             });

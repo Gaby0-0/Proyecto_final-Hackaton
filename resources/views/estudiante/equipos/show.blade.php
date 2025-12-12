@@ -191,6 +191,34 @@
                             </button>
                         </form>
                     @else
+                        <!-- Transferir Liderazgo -->
+                        @if($equipo->miembros->count() > 1)
+                            <div class="bg-white border border-gray-200 rounded-lg p-4 mb-3">
+                                <h3 class="text-sm font-semibold text-gray-800 mb-3 flex items-center">
+                                    <i class="fas fa-exchange-alt mr-2"></i>
+                                    Transferir Liderazgo
+                                </h3>
+                                <p class="text-xs text-gray-600 mb-3">
+                                    Selecciona un miembro del equipo para transferirle el rol de líder. Tú pasarás a ser miembro regular.
+                                </p>
+                                <form action="{{ route('estudiante.equipos.transferir-liderazgo', $equipo) }}" method="POST" onsubmit="return confirmarTransferencia()">
+                                    @csrf
+                                    <select name="nuevo_lider_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option value="">Seleccionar miembro...</option>
+                                        @foreach($equipo->miembros as $miembro)
+                                            @if($miembro->pivot->rol_equipo != 'lider')
+                                                <option value="{{ $miembro->id }}">{{ $miembro->name }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm">
+                                        <i class="fas fa-crown mr-2"></i>
+                                        Transferir Liderazgo
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
+
                         <div class="bg-blue-100 border border-blue-400 text-blue-800 px-4 py-3 rounded-lg mb-3">
                             <i class="fas fa-info-circle mr-2"></i>
                             Como líder, puedes gestionar el equipo desde el panel de administración
@@ -228,6 +256,18 @@ function copiarCodigo(codigo) {
     }, function(err) {
         alert('Error al copiar el código');
     });
+}
+
+function confirmarTransferencia() {
+    const select = document.querySelector('select[name="nuevo_lider_id"]');
+    const nombreNuevoLider = select.options[select.selectedIndex].text;
+
+    if (!select.value) {
+        alert('Por favor selecciona un miembro del equipo.');
+        return false;
+    }
+
+    return confirm(`¿Estás seguro de transferir el liderazgo a ${nombreNuevoLider}? Tú pasarás a ser miembro regular del equipo.`);
 }
 </script>
 @endpush

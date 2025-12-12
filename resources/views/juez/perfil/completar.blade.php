@@ -63,20 +63,20 @@
                             required
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('especialidad') border-red-500 @enderror">
                         <option value="">Selecciona tu especialidad</option>
-                        <option value="Desarrollo de Software" {{ old('especialidad', $user->especialidad) == 'Desarrollo de Software' ? 'selected' : '' }}>Desarrollo de Software</option>
-                        <option value="Inteligencia Artificial" {{ old('especialidad', $user->especialidad) == 'Inteligencia Artificial' ? 'selected' : '' }}>Inteligencia Artificial</option>
-                        <option value="Ciencia de Datos" {{ old('especialidad', $user->especialidad) == 'Ciencia de Datos' ? 'selected' : '' }}>Ciencia de Datos</option>
-                        <option value="Ciberseguridad" {{ old('especialidad', $user->especialidad) == 'Ciberseguridad' ? 'selected' : '' }}>Ciberseguridad</option>
-                        <option value="Redes y Telecomunicaciones" {{ old('especialidad', $user->especialidad) == 'Redes y Telecomunicaciones' ? 'selected' : '' }}>Redes y Telecomunicaciones</option>
-                        <option value="Bases de Datos" {{ old('especialidad', $user->especialidad) == 'Bases de Datos' ? 'selected' : '' }}>Bases de Datos</option>
-                        <option value="Desarrollo Web" {{ old('especialidad', $user->especialidad) == 'Desarrollo Web' ? 'selected' : '' }}>Desarrollo Web</option>
-                        <option value="Desarrollo Móvil" {{ old('especialidad', $user->especialidad) == 'Desarrollo Móvil' ? 'selected' : '' }}>Desarrollo Móvil</option>
-                        <option value="IoT (Internet of Things)" {{ old('especialidad', $user->especialidad) == 'IoT (Internet of Things)' ? 'selected' : '' }}>IoT (Internet of Things)</option>
-                        <option value="Computación en la Nube" {{ old('especialidad', $user->especialidad) == 'Computación en la Nube' ? 'selected' : '' }}>Computación en la Nube</option>
-                        <option value="Arquitectura de Software" {{ old('especialidad', $user->especialidad) == 'Arquitectura de Software' ? 'selected' : '' }}>Arquitectura de Software</option>
-                        <option value="DevOps" {{ old('especialidad', $user->especialidad) == 'DevOps' ? 'selected' : '' }}>DevOps</option>
-                        <option value="Blockchain" {{ old('especialidad', $user->especialidad) == 'Blockchain' ? 'selected' : '' }}>Blockchain</option>
-                        <option value="Otra" {{ old('especialidad', $user->especialidad) == 'Otra' ? 'selected' : '' }}>Otra</option>
+                        <option value="Desarrollo de Software" {{ old('especialidad', $user->datosJuez?->especialidad) == 'Desarrollo de Software' ? 'selected' : '' }}>Desarrollo de Software</option>
+                        <option value="Inteligencia Artificial" {{ old('especialidad', $user->datosJuez?->especialidad) == 'Inteligencia Artificial' ? 'selected' : '' }}>Inteligencia Artificial</option>
+                        <option value="Ciencia de Datos" {{ old('especialidad', $user->datosJuez?->especialidad) == 'Ciencia de Datos' ? 'selected' : '' }}>Ciencia de Datos</option>
+                        <option value="Ciberseguridad" {{ old('especialidad', $user->datosJuez?->especialidad) == 'Ciberseguridad' ? 'selected' : '' }}>Ciberseguridad</option>
+                        <option value="Redes y Telecomunicaciones" {{ old('especialidad', $user->datosJuez?->especialidad) == 'Redes y Telecomunicaciones' ? 'selected' : '' }}>Redes y Telecomunicaciones</option>
+                        <option value="Bases de Datos" {{ old('especialidad', $user->datosJuez?->especialidad) == 'Bases de Datos' ? 'selected' : '' }}>Bases de Datos</option>
+                        <option value="Desarrollo Web" {{ old('especialidad', $user->datosJuez?->especialidad) == 'Desarrollo Web' ? 'selected' : '' }}>Desarrollo Web</option>
+                        <option value="Desarrollo Móvil" {{ old('especialidad', $user->datosJuez?->especialidad) == 'Desarrollo Móvil' ? 'selected' : '' }}>Desarrollo Móvil</option>
+                        <option value="IoT (Internet of Things)" {{ old('especialidad', $user->datosJuez?->especialidad) == 'IoT (Internet of Things)' ? 'selected' : '' }}>IoT (Internet of Things)</option>
+                        <option value="Computación en la Nube" {{ old('especialidad', $user->datosJuez?->especialidad) == 'Computación en la Nube' ? 'selected' : '' }}>Computación en la Nube</option>
+                        <option value="Arquitectura de Software" {{ old('especialidad', $user->datosJuez?->especialidad) == 'Arquitectura de Software' ? 'selected' : '' }}>Arquitectura de Software</option>
+                        <option value="DevOps" {{ old('especialidad', $user->datosJuez?->especialidad) == 'DevOps' ? 'selected' : '' }}>DevOps</option>
+                        <option value="Blockchain" {{ old('especialidad', $user->datosJuez?->especialidad) == 'Blockchain' ? 'selected' : '' }}>Blockchain</option>
+                        <option value="Otra" {{ old('especialidad', $user->datosJuez?->especialidad) == 'Otra' ? 'selected' : '' }}>Otra</option>
                     </select>
                     @error('especialidad')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>

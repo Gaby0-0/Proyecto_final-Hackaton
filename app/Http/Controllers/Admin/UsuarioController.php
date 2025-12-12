@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreUsuarioRequest;
+use App\Http\Requests\Admin\UpdateUsuarioRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -15,9 +17,9 @@ class UsuarioController extends Controller
 
         // Filtro por búsqueda
         if ($request->filled('buscar')) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->buscar . '%')
-                  ->orWhere('email', 'like', '%' . $request->buscar . '%');
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%'.$request->buscar.'%')
+                    ->orWhere('email', 'like', '%'.$request->buscar.'%');
             });
         }
 
@@ -45,14 +47,9 @@ class UsuarioController extends Controller
         return view('admin.usuarios.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreUsuarioRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8|confirmed',
-            'role' => 'required|in:admin,juez,estudiante'
-        ]);
+        $validated = $request->validated();
 
         $validated['password'] = Hash::make($validated['password']);
 
@@ -72,16 +69,11 @@ class UsuarioController extends Controller
         return view('admin.usuarios.edit', compact('usuario'));
     }
 
-    public function update(Request $request, User $usuario)
+    public function update(UpdateUsuarioRequest $request, User $usuario)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $usuario->id,
-            'role' => 'required|in:admin,juez,estudiante'
-        ]);
+        $validated = $request->validated();
 
         if ($request->filled('password')) {
-            $request->validate(['password' => 'min:8|confirmed']);
             $validated['password'] = Hash::make($request->password);
         }
 

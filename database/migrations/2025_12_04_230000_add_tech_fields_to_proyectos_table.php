@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('proyectos', 'tecnologias')) {
+        if (! Schema::hasColumn('proyectos', 'tecnologias')) {
             Schema::table('proyectos', function (Blueprint $table) {
                 $table->text('tecnologias')->nullable()->after('categoria');
                 $table->text('requisitos')->nullable()->after('tecnologias');

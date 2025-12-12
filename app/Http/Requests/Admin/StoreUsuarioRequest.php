@@ -36,4 +36,19 @@ class StoreUsuarioRequest extends FormRequest
             'role.in' => 'El rol debe ser: admin, juez o estudiante.',
         ];
     }
+
+    /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'name' => 'nombre',
+            'email' => 'correo electrónico',
+            'password' => 'contraseña',
+            'role' => 'rol',
+        ];
+    }
 }

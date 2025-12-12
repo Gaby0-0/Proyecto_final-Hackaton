@@ -42,7 +42,7 @@ $breadcrumbs = [
                 <input type="text"
                        id="nombre_completo"
                        name="nombre_completo"
-                       value="{{ old('nombre_completo', $juez->nombre_completo) }}"
+                       value="{{ old('nombre_completo', $juez->datosJuez?->nombre_completo ?? $juez->name) }}"
                        placeholder="Ej: Dr. Juan Pérez García"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('nombre_completo') border-red-500 @enderror">
                 @error('nombre_completo')
@@ -60,20 +60,20 @@ $breadcrumbs = [
                         name="especialidad"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('especialidad') border-red-500 @enderror">
                     <option value="">Selecciona una especialidad</option>
-                    <option value="Desarrollo de Software" {{ old('especialidad', $juez->especialidad) == 'Desarrollo de Software' ? 'selected' : '' }}>Desarrollo de Software</option>
-                    <option value="Inteligencia Artificial" {{ old('especialidad', $juez->especialidad) == 'Inteligencia Artificial' ? 'selected' : '' }}>Inteligencia Artificial</option>
-                    <option value="Ciencia de Datos" {{ old('especialidad', $juez->especialidad) == 'Ciencia de Datos' ? 'selected' : '' }}>Ciencia de Datos</option>
-                    <option value="Ciberseguridad" {{ old('especialidad', $juez->especialidad) == 'Ciberseguridad' ? 'selected' : '' }}>Ciberseguridad</option>
-                    <option value="Redes y Telecomunicaciones" {{ old('especialidad', $juez->especialidad) == 'Redes y Telecomunicaciones' ? 'selected' : '' }}>Redes y Telecomunicaciones</option>
-                    <option value="Bases de Datos" {{ old('especialidad', $juez->especialidad) == 'Bases de Datos' ? 'selected' : '' }}>Bases de Datos</option>
-                    <option value="Desarrollo Web" {{ old('especialidad', $juez->especialidad) == 'Desarrollo Web' ? 'selected' : '' }}>Desarrollo Web</option>
-                    <option value="Desarrollo Móvil" {{ old('especialidad', $juez->especialidad) == 'Desarrollo Móvil' ? 'selected' : '' }}>Desarrollo Móvil</option>
-                    <option value="IoT (Internet of Things)" {{ old('especialidad', $juez->especialidad) == 'IoT (Internet of Things)' ? 'selected' : '' }}>IoT (Internet of Things)</option>
-                    <option value="Computación en la Nube" {{ old('especialidad', $juez->especialidad) == 'Computación en la Nube' ? 'selected' : '' }}>Computación en la Nube</option>
-                    <option value="Arquitectura de Software" {{ old('especialidad', $juez->especialidad) == 'Arquitectura de Software' ? 'selected' : '' }}>Arquitectura de Software</option>
-                    <option value="DevOps" {{ old('especialidad', $juez->especialidad) == 'DevOps' ? 'selected' : '' }}>DevOps</option>
-                    <option value="Blockchain" {{ old('especialidad', $juez->especialidad) == 'Blockchain' ? 'selected' : '' }}>Blockchain</option>
-                    <option value="Otra" {{ old('especialidad', $juez->especialidad) == 'Otra' ? 'selected' : '' }}>Otra</option>
+                    <option value="Desarrollo de Software" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'Desarrollo de Software' ? 'selected' : '' }}>Desarrollo de Software</option>
+                    <option value="Inteligencia Artificial" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'Inteligencia Artificial' ? 'selected' : '' }}>Inteligencia Artificial</option>
+                    <option value="Ciencia de Datos" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'Ciencia de Datos' ? 'selected' : '' }}>Ciencia de Datos</option>
+                    <option value="Ciberseguridad" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'Ciberseguridad' ? 'selected' : '' }}>Ciberseguridad</option>
+                    <option value="Redes y Telecomunicaciones" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'Redes y Telecomunicaciones' ? 'selected' : '' }}>Redes y Telecomunicaciones</option>
+                    <option value="Bases de Datos" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'Bases de Datos' ? 'selected' : '' }}>Bases de Datos</option>
+                    <option value="Desarrollo Web" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'Desarrollo Web' ? 'selected' : '' }}>Desarrollo Web</option>
+                    <option value="Desarrollo Móvil" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'Desarrollo Móvil' ? 'selected' : '' }}>Desarrollo Móvil</option>
+                    <option value="IoT (Internet of Things)" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'IoT (Internet of Things)' ? 'selected' : '' }}>IoT (Internet of Things)</option>
+                    <option value="Computación en la Nube" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'Computación en la Nube' ? 'selected' : '' }}>Computación en la Nube</option>
+                    <option value="Arquitectura de Software" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'Arquitectura de Software' ? 'selected' : '' }}>Arquitectura de Software</option>
+                    <option value="DevOps" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'DevOps' ? 'selected' : '' }}>DevOps</option>
+                    <option value="Blockchain" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'Blockchain' ? 'selected' : '' }}>Blockchain</option>
+                    <option value="Otra" {{ old('especialidad', $juez->datosJuez?->especialidad) == 'Otra' ? 'selected' : '' }}>Otra</option>
                 </select>
                 @error('especialidad')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -129,7 +129,7 @@ $breadcrumbs = [
                            id="activo"
                            name="activo"
                            value="1"
-                           {{ old('activo', $juez->activo) ? 'checked' : '' }}
+                           {{ old('activo', $juez->datosJuez?->activo) ? 'checked' : '' }}
                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                     <label for="activo" class="ml-2 block text-sm text-gray-700">
                         Cuenta activa (el juez podrá iniciar sesión)

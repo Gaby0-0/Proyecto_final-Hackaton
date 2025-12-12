@@ -18,6 +18,7 @@ class ConfiguracionGlobal extends Model
     public static function obtener($clave, $default = null)
     {
         $config = self::where('clave', $clave)->first();
+
         return $config ? $config->valor : $default;
     }
 

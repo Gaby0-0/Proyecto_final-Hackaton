@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Juez;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Juez\ActualizarPerfilJuezRequest;
+use App\Http\Requests\Juez\GuardarPerfilJuezRequest;
 use Illuminate\Support\Facades\Auth;
 
 class PerfilController extends Controller
@@ -26,21 +27,11 @@ class PerfilController extends Controller
     /**
      * Guardar información completa del perfil.
      */
-    public function guardar(Request $request)
+    public function guardar(GuardarPerfilJuezRequest $request)
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
-            'nombre_completo' => 'required|string|max:255',
-            'especialidad' => 'required|string|max:255',
-            'cedula_profesional' => 'nullable|string|max:255',
-            'institucion' => 'nullable|string|max:255',
-            'experiencia' => 'nullable|string',
-            'telefono' => 'nullable|string|max:20',
-        ], [
-            'nombre_completo.required' => 'El nombre completo es obligatorio.',
-            'especialidad.required' => 'La especialidad es obligatoria.',
-        ]);
+        $validated = $request->validated();
 
         // Crear o actualizar datos del juez
         $user->datosJuez()->updateOrCreate(
@@ -67,6 +58,7 @@ class PerfilController extends Controller
     public function mostrar()
     {
         $user = Auth::user();
+
         return view('juez.perfil.mostrar', compact('user'));
     }
 
@@ -76,24 +68,18 @@ class PerfilController extends Controller
     public function editar()
     {
         $user = Auth::user();
+
         return view('juez.perfil.editar', compact('user'));
     }
 
     /**
      * Actualizar el perfil del juez.
      */
-    public function actualizar(Request $request)
+    public function actualizar(ActualizarPerfilJuezRequest $request)
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
-            'nombre_completo' => 'required|string|max:255',
-            'especialidad' => 'required|string|max:255',
-            'cedula_profesional' => 'nullable|string|max:255',
-            'institucion' => 'nullable|string|max:255',
-            'experiencia' => 'nullable|string',
-            'telefono' => 'nullable|string|max:20',
-        ]);
+        $validated = $request->validated();
 
         // Actualizar datos del juez
         $user->datosJuez()->updateOrCreate(

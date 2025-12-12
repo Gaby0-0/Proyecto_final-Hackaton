@@ -18,20 +18,20 @@ return new class extends Migration
 
         // Actualizar tabla jueces
         Schema::table('jueces', function (Blueprint $table) {
-            if (!Schema::hasColumn('jueces', 'nombre_completo')) {
+            if (! Schema::hasColumn('jueces', 'nombre_completo')) {
                 $table->string('nombre_completo')->after('user_id');
             }
-            if (!Schema::hasColumn('jueces', 'email_institucional')) {
+            if (! Schema::hasColumn('jueces', 'email_institucional')) {
                 $table->string('email_institucional')->nullable()->after('telefono');
             }
         });
 
         // Actualizar tabla administradores
         Schema::table('administradores', function (Blueprint $table) {
-            if (!Schema::hasColumn('administradores', 'nombre_completo')) {
+            if (! Schema::hasColumn('administradores', 'nombre_completo')) {
                 $table->string('nombre_completo')->after('user_id');
             }
-            if (!Schema::hasColumn('administradores', 'cargo')) {
+            if (! Schema::hasColumn('administradores', 'cargo')) {
                 $table->string('cargo')->nullable()->after('departamento');
             }
         });

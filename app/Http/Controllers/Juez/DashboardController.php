@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Juez;
 use App\Http\Controllers\Controller;
 use App\Models\Equipo;
 use App\Models\Evaluacion;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller

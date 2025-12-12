@@ -93,7 +93,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::put('configuracion', [ConfiguracionController::class, 'update'])->name('configuracion.update');
 
     // Gestión de jueces
-    Route::resource('jueces', JuezController::class);
+    Route::resource('jueces', JuezController::class)->parameters(['jueces' => 'juez']);
 
     // Asignación de jueces
     Route::get('jueces-asignar', [JuezController::class, 'asignar'])->name('jueces.asignar');
@@ -170,6 +170,7 @@ Route::middleware(['auth', 'estudiante'])->prefix('dashboard')->name('estudiante
     Route::post('/equipos/unirse-codigo', [\App\Http\Controllers\Estudiante\EquipoController::class, 'unirseCodigo'])->name('equipos.unirse-codigo');
     Route::get('/equipos/{equipo}', [\App\Http\Controllers\Estudiante\EquipoController::class, 'show'])->name('equipos.show');
     Route::post('/equipos/{equipo}/unirse', [\App\Http\Controllers\Estudiante\EquipoController::class, 'unirse'])->name('equipos.unirse');
+    Route::post('/equipos/{equipo}/transferir-liderazgo', [\App\Http\Controllers\Estudiante\EquipoController::class, 'transferirLiderazgo'])->name('equipos.transferir-liderazgo');
     Route::delete('/equipos/{equipo}/salir', [\App\Http\Controllers\Estudiante\EquipoController::class, 'salir'])->name('equipos.salir');
     Route::delete('/equipos/{equipo}', [\App\Http\Controllers\Estudiante\EquipoController::class, 'destroy'])->name('equipos.destroy');
 

@@ -14,7 +14,7 @@ class AdminMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         // Verificar si el usuario está autenticado
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login')->with('error', 'Debes iniciar sesión para acceder al panel de administración.');
         }
 

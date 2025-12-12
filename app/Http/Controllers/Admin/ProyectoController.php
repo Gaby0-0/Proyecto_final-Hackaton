@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Proyecto;
 use App\Models\Equipo;
-use App\Models\Evento;
+use App\Models\Proyecto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -33,15 +32,15 @@ class ProyectoController extends Controller
 
         // Filtro por búsqueda
         if ($request->filled('buscar')) {
-            $query->where(function($q) use ($request) {
-                $q->where('equipo_evento.proyecto_titulo', 'like', '%' . $request->buscar . '%')
-                  ->orWhere('equipo_evento.proyecto_descripcion', 'like', '%' . $request->buscar . '%')
-                  ->orWhere('equipos.nombre', 'like', '%' . $request->buscar . '%');
+            $query->where(function ($q) use ($request) {
+                $q->where('equipo_evento.proyecto_titulo', 'like', '%'.$request->buscar.'%')
+                    ->orWhere('equipo_evento.proyecto_descripcion', 'like', '%'.$request->buscar.'%')
+                    ->orWhere('equipos.nombre', 'like', '%'.$request->buscar.'%');
             });
         }
 
         $proyectos = $query->orderBy('equipo_evento.fecha_entrega_final', 'desc')
-                          ->paginate(10);
+            ->paginate(10);
 
         return view('admin.proyectos.index', compact('proyectos'));
     }
@@ -64,7 +63,7 @@ class ProyectoController extends Controller
             )
             ->first();
 
-        if (!$proyecto) {
+        if (! $proyecto) {
             abort(404, 'Proyecto no encontrado');
         }
 

@@ -31,7 +31,7 @@ return new class extends Migration
                 'criterio_funcionalidad',
                 'criterio_presentacion',
                 'criterio_impacto',
-                'criterio_tecnico'
+                'criterio_tecnico',
             ]);
         });
     }

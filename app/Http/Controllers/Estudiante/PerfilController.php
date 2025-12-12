@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Estudiante;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Estudiante\ActualizarRolEquipoRequest;
+use App\Http\Requests\Estudiante\UpdatePerfilEstudianteRequest;
+use App\Http\Requests\Shared\CambiarPasswordRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -28,21 +30,11 @@ class PerfilController extends Controller
     }
 
     // Actualizar perfil
-    public function update(Request $request)
+    public function update(UpdatePerfilEstudianteRequest $request)
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'numero_control' => 'nullable|string|max:50',
-            'carrera' => 'nullable|string|max:255',
-            'semestre' => 'nullable|integer|min:1|max:12',
-            'telefono' => 'nullable|string|max:20',
-            'github' => 'nullable|url|max:255',
-            'linkedin' => 'nullable|url|max:255',
-            'portafolio' => 'nullable|url|max:255',
-        ]);
+        $validated = $request->validated();
 
         // Actualizar usuario
         $user->update([
@@ -70,17 +62,14 @@ class PerfilController extends Controller
     }
 
     // Cambiar contraseña
-    public function cambiarPassword(Request $request)
+    public function cambiarPassword(CambiarPasswordRequest $request)
     {
-        $validated = $request->validate([
-            'password_actual' => 'required',
-            'password' => 'required|min:8|confirmed',
-        ]);
+        $validated = $request->validated();
 
         $user = Auth::user();
 
         // Verificar contraseña actual
-        if (!Hash::check($validated['password_actual'], $user->password)) {
+        if (! Hash::check($validated['password_actual'], $user->password)) {
             return back()->with('error', 'La contraseña actual no es correcta');
         }
 
@@ -93,18 +82,16 @@ class PerfilController extends Controller
     }
 
     // Actualizar rol específico en un equipo
-    public function actualizarRolEquipo(Request $request, $equipoId)
+    public function actualizarRolEquipo(ActualizarRolEquipoRequest $request, $equipoId)
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
-            'rol_especifico' => 'required|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         // Verificar que el usuario es miembro del equipo
         $equipo = $user->equipos()->where('equipo_id', $equipoId)->first();
 
-        if (!$equipo) {
+        if (! $equipo) {
             return back()->with('error', 'No eres miembro de este equipo');
         }
 

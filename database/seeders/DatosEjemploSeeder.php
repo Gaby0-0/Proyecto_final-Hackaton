@@ -2,13 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\Evento;
 use App\Models\Equipo;
-use App\Models\Proyecto;
 use App\Models\Evaluacion;
+use App\Models\Evento;
+use App\Models\Proyecto;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class DatosEjemploSeeder extends Seeder
 {

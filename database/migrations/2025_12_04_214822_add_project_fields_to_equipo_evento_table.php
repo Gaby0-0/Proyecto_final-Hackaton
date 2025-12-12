@@ -33,7 +33,7 @@ return new class extends Migration
                 'avances',
                 'proyecto_final_url',
                 'fecha_entrega_final',
-                'notas_equipo'
+                'notas_equipo',
             ]);
         });
     }

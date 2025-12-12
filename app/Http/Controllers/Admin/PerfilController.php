@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\UpdatePerfilAdminRequest;
+use App\Http\Requests\Shared\CambiarPasswordRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -28,17 +29,11 @@ class PerfilController extends Controller
     }
 
     // Actualizar perfil
-    public function update(Request $request)
+    public function update(UpdatePerfilAdminRequest $request)
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'nombre_completo' => 'nullable|string|max:255',
-            'telefono' => 'nullable|string|max:20',
-            'departamento' => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         // Actualizar usuario
         $user->update([
@@ -62,17 +57,14 @@ class PerfilController extends Controller
     }
 
     // Cambiar contraseña
-    public function cambiarPassword(Request $request)
+    public function cambiarPassword(CambiarPasswordRequest $request)
     {
-        $validated = $request->validate([
-            'password_actual' => 'required',
-            'password' => 'required|min:8|confirmed',
-        ]);
+        $validated = $request->validated();
 
         $user = Auth::user();
 
         // Verificar contraseña actual
-        if (!Hash::check($validated['password_actual'], $user->password)) {
+        if (! Hash::check($validated['password_actual'], $user->password)) {
             return back()->with('error', 'La contraseña actual no es correcta');
         }
 

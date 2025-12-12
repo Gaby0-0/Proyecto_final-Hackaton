@@ -60,4 +60,21 @@ class DatosEstudianteRequest extends FormRequest
             'direccion.max' => 'La dirección no puede tener más de :max caracteres.',
         ];
     }
+
+    /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'numero_control' => 'número de control',
+            'carrera' => 'carrera',
+            'semestre' => 'semestre',
+            'telefono' => 'teléfono',
+            'fecha_nacimiento' => 'fecha de nacimiento',
+            'direccion' => 'dirección',
+        ];
+    }
 }

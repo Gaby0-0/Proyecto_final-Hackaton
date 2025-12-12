@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Estudiante;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Estudiante\StoreEquipoRequest;
+use App\Http\Requests\Estudiante\TransferirLiderazgoRequest;
+use App\Http\Requests\Estudiante\UnirseCodigoRequest;
 use App\Models\Equipo;
 use App\Models\Proyecto;
 use Illuminate\Http\Request;
@@ -22,16 +25,13 @@ class EquipoController extends Controller
     }
 
     // Unirse a equipo usando código
-    public function unirseCodigo(Request $request)
+    public function unirseCodigo(UnirseCodigoRequest $request)
     {
-        $request->validate([
-            'codigo' => 'required|string|size:8',
-            'rol_especifico' => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
 
-        $equipo = Equipo::where('codigo', strtoupper($request->codigo))->first();
+        $equipo = Equipo::where('codigo', strtoupper($validated['codigo']))->first();
 
-        if (!$equipo) {
+        if (! $equipo) {
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Código de equipo no válido. Verifica el código e intenta de nuevo.');
@@ -40,12 +40,12 @@ class EquipoController extends Controller
         $user = Auth::user();
 
         // Verificar si el equipo está activo
-        if (!$equipo->activo) {
+        if (! $equipo->activo) {
             return redirect()->back()->with('error', 'Este equipo no está activo.');
         }
 
         // Verificar si puede unirse
-        if (!$equipo->puedeUnirse($user)) {
+        if (! $equipo->puedeUnirse($user)) {
             if ($equipo->estaLleno()) {
                 return redirect()->back()->with('error', 'Este equipo ya está lleno.');
             } else {
@@ -56,29 +56,25 @@ class EquipoController extends Controller
         // Unir al usuario como miembro con rol específico
         $equipo->miembros()->attach($user->id, [
             'rol_equipo' => 'miembro',
-            'rol_especifico' => $request->rol_especifico ?? 'Miembro'
+            'rol_especifico' => $validated['rol_especifico'] ?? 'Miembro',
         ]);
 
         return redirect()->route('estudiante.equipos.show', $equipo)
-            ->with('success', 'Te has unido exitosamente al equipo ' . $equipo->nombre);
+            ->with('success', 'Te has unido exitosamente al equipo '.$equipo->nombre);
     }
 
     // Mostrar formulario para crear equipo
     public function create()
     {
         $proyectos = Proyecto::all();
+
         return view('estudiante.equipos.create', compact('proyectos'));
     }
 
     // Guardar nuevo equipo
-    public function store(Request $request)
+    public function store(StoreEquipoRequest $request)
     {
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:255|unique:equipos,nombre',
-            'descripcion' => 'nullable|string',
-            'proyecto_id' => 'nullable|exists:proyectos,id',
-            'max_integrantes' => 'required|integer|min:2|max:10',
-        ]);
+        $validated = $request->validated();
 
         $equipo = Equipo::create([
             'nombre' => $validated['nombre'],
@@ -91,7 +87,7 @@ class EquipoController extends Controller
         // El creador se convierte automáticamente en líder
         $equipo->miembros()->attach(Auth::id(), [
             'rol_equipo' => 'lider',
-            'rol_especifico' => 'Líder del Equipo'
+            'rol_especifico' => 'Líder del Equipo',
         ]);
 
         return redirect()->route('estudiante.equipos.index')
@@ -121,12 +117,12 @@ class EquipoController extends Controller
         $user = Auth::user();
 
         // Verificar si el equipo está activo
-        if (!$equipo->activo) {
+        if (! $equipo->activo) {
             return redirect()->back()->with('error', 'Este equipo no está activo.');
         }
 
         // Verificar si puede unirse
-        if (!$equipo->puedeUnirse($user)) {
+        if (! $equipo->puedeUnirse($user)) {
             if ($equipo->estaLleno()) {
                 return redirect()->back()->with('error', 'Este equipo ya está lleno.');
             } else {
@@ -147,7 +143,7 @@ class EquipoController extends Controller
         $user = Auth::user();
 
         // Verificar si es miembro
-        if (!$equipo->miembros()->where('user_id', $user->id)->exists()) {
+        if (! $equipo->miembros()->where('user_id', $user->id)->exists()) {
             return redirect()->back()->with('error', 'No eres miembro de este equipo.');
         }
 
@@ -164,6 +160,7 @@ class EquipoController extends Controller
             }
             // Si es el único miembro, eliminar el equipo
             $equipo->delete();
+
             return redirect()->route('estudiante.equipos.index')
                 ->with('success', 'Has salido del equipo y el equipo ha sido eliminado.');
         }
@@ -186,7 +183,7 @@ class EquipoController extends Controller
             ->wherePivot('rol_equipo', 'lider')
             ->exists();
 
-        if (!$esLider) {
+        if (! $esLider) {
             return redirect()->back()->with('error', 'Solo el líder puede eliminar el equipo.');
         }
 
@@ -194,5 +191,53 @@ class EquipoController extends Controller
 
         return redirect()->route('estudiante.equipos.index')
             ->with('success', 'Equipo eliminado exitosamente.');
+    }
+
+    // Transferir liderazgo a otro miembro del equipo (solo líder)
+    public function transferirLiderazgo(TransferirLiderazgoRequest $request, Equipo $equipo)
+    {
+        $validated = $request->validated();
+        $user = Auth::user();
+
+        // Verificar si el usuario actual es el líder
+        $esLider = $equipo->miembros()
+            ->where('user_id', $user->id)
+            ->wherePivot('rol_equipo', 'lider')
+            ->exists();
+
+        if (! $esLider) {
+            return redirect()->back()->with('error', 'Solo el líder puede transferir el liderazgo.');
+        }
+
+        $nuevoLiderId = $validated['nuevo_lider_id'];
+
+        // Verificar que no se esté transfiriendo a sí mismo
+        if ($nuevoLiderId == $user->id) {
+            return redirect()->back()->with('error', 'No puedes transferir el liderazgo a ti mismo.');
+        }
+
+        // Verificar que el nuevo líder sea miembro del equipo
+        $nuevoLiderEsMiembro = $equipo->miembros()
+            ->where('user_id', $nuevoLiderId)
+            ->exists();
+
+        if (! $nuevoLiderEsMiembro) {
+            return redirect()->back()->with('error', 'El usuario seleccionado no es miembro de este equipo.');
+        }
+
+        // Cambiar rol del líder actual a miembro
+        $equipo->miembros()->updateExistingPivot($user->id, [
+            'rol_equipo' => 'miembro',
+            'rol_especifico' => 'Miembro',
+        ]);
+
+        // Cambiar rol del nuevo líder
+        $equipo->miembros()->updateExistingPivot($nuevoLiderId, [
+            'rol_equipo' => 'lider',
+            'rol_especifico' => 'Líder del Equipo',
+        ]);
+
+        return redirect()->route('estudiante.equipos.show', $equipo)
+            ->with('success', 'El liderazgo ha sido transferido exitosamente.');
     }
 }

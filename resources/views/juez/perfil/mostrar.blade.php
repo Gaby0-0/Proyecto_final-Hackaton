@@ -48,7 +48,7 @@
                             </h2>
                             <p class="text-sm text-gray-500">
                                 <i class="fas fa-briefcase mr-1"></i>
-                                {{ $user->especialidad ?? 'No especificada' }}
+                                {{ $user->datosJuez?->especialidad ?? 'No especificada' }}
                             </p>
                             <div class="mt-2">
                                 @if($user->activo)
@@ -94,7 +94,7 @@
                                 <i class="fas fa-graduation-cap mr-2"></i>
                                 Especialidad
                             </dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->especialidad ?? 'No especificada' }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">{{ $user->datosJuez?->especialidad ?? 'No especificada' }}</dd>
                         </div>
 
                         <!-- Rol -->

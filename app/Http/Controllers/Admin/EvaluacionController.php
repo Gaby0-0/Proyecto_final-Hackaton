@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Equipo;
 use App\Models\Evaluacion;
 use App\Models\Evento;
-use App\Models\Equipo;
 use Illuminate\Http\Request;
 
 class EvaluacionController extends Controller
@@ -70,7 +70,7 @@ class EvaluacionController extends Controller
         $evaluacionMasBaja = $evaluaciones->min('puntuacion');
 
         // Agrupar por equipo
-        $evaluacionesPorEquipo = $evaluaciones->groupBy('equipo_id')->map(function($evals) {
+        $evaluacionesPorEquipo = $evaluaciones->groupBy('equipo_id')->map(function ($evals) {
             return [
                 'equipo' => $evals->first()->equipo,
                 'evaluaciones' => $evals,

@@ -3,13 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Usuario;
 use App\Models\Equipo;
-use App\Models\Evento;
 use App\Models\Evaluacion;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\Evento;
+use App\Models\User;
 
 class DashboardController extends Controller
 {
@@ -86,7 +83,7 @@ class DashboardController extends Controller
                 'mensaje' => "Nuevo equipo registrado: \"{$equipo->nombre}\"",
                 'tiempo' => $equipo->created_at->diffForHumans(),
                 'icono' => 'info',
-                'fecha' => $equipo->created_at
+                'fecha' => $equipo->created_at,
             ];
         }
 
@@ -95,10 +92,10 @@ class DashboardController extends Controller
         foreach ($ultimasEvaluaciones as $evaluacion) {
             $actividades[] = [
                 'tipo' => 'evaluacion',
-                'mensaje' => "Nueva evaluación registrada",
+                'mensaje' => 'Nueva evaluación registrada',
                 'tiempo' => $evaluacion->created_at->diffForHumans(),
                 'icono' => 'success',
-                'fecha' => $evaluacion->created_at
+                'fecha' => $evaluacion->created_at,
             ];
         }
 
@@ -110,12 +107,12 @@ class DashboardController extends Controller
                 'mensaje' => "Nuevo usuario registrado: {$usuario->name}",
                 'tiempo' => $usuario->created_at->diffForHumans(),
                 'icono' => 'info',
-                'fecha' => $usuario->created_at
+                'fecha' => $usuario->created_at,
             ];
         }
 
         // Ordenar por fecha
-        usort($actividades, function($a, $b) {
+        usort($actividades, function ($a, $b) {
             return $b['fecha'] <=> $a['fecha'];
         });
 
@@ -128,7 +125,7 @@ class DashboardController extends Controller
             'administradores' => User::where('role', 'admin')->count(),
             'usuarios' => User::where('role', 'estudiante')->count(),
             'jueces' => User::where('role', 'juez')->count(),
-            'total' => User::count()
+            'total' => User::count(),
         ];
     }
 }
