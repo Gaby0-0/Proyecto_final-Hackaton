@@ -2,7 +2,7 @@
 
 # Ejecutar migraciones
 php artisan migrate --force
-
+php artisan migrate --force
 # Limpiar y cachear configuración
 php artisan config:clear
 php artisan config:cache
