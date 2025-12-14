@@ -4,6 +4,7 @@ FROM php:8.2-fpm
 # Dependencias del sistema
 # -----------------------------
 RUN apt-get update && apt-get install -y \
+    nginx \
     git \
     curl \
     libpng-dev \
@@ -48,6 +49,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 WORKDIR /var/www/html
 
 # -----------------------------
+# Copiar configuración nginx
+# -----------------------------
+COPY nginx.conf /etc/nginx/sites-available/default
+
+# -----------------------------
 # Copiar proyecto
 # -----------------------------
 COPY . .
@@ -66,7 +72,8 @@ RUN npm install && npm run build
 # Permisos
 # -----------------------------
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache public \
+    && chmod +x start.sh
 
 # -----------------------------
 # Puerto Render
@@ -76,4 +83,4 @@ EXPOSE 10000
 # -----------------------------
 # Arranque
 # -----------------------------
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000
+CMD ["./start.sh"]
