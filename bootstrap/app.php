@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Configurar TrustProxies para detectar HTTPS correctamente en producción
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'juez' => \App\Http\Middleware\JuezMiddleware::class,

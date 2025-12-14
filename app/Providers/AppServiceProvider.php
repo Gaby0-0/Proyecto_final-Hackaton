@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Evento;
 use App\Observers\EventoObserver;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,6 +22,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Forzar HTTPS en producción
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         // Registrar el Observer de Evento para actualizar automáticamente el estado según fecha/hora
         Evento::observe(EventoObserver::class);
     }
