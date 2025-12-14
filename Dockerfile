@@ -4,8 +4,6 @@ FROM php:8.2-fpm
 # Dependencias del sistema
 # -----------------------------
 RUN apt-get update && apt-get install -y \
-    nginx \
-    supervisor \
     git \
     curl \
     libpng-dev \
@@ -16,20 +14,15 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     zip \
     unzip \
-    sqlite3 \
-    libsqlite3-dev \
-    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
-# Extensiones PHP
+# Extensiones PHP (MySQL)
 # -----------------------------
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
     pdo \
     pdo_mysql \
-    pdo_pgsql \
-    pdo_sqlite \
     mbstring \
     exif \
     pcntl \
@@ -44,7 +37,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # -----------------------------
-# Node.js 20 + npm
+# Node.js 20
 # -----------------------------
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
@@ -60,12 +53,12 @@ WORKDIR /var/www/html
 COPY . .
 
 # -----------------------------
-# Instalar dependencias PHP
+# Dependencias PHP
 # -----------------------------
 RUN composer install --no-dev --optimize-autoloader
 
 # -----------------------------
-# Instalar dependencias frontend y compilar
+# Frontend
 # -----------------------------
 RUN npm install && npm run build
 
@@ -73,18 +66,14 @@ RUN npm install && npm run build
 # Permisos
 # -----------------------------
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache
 
 # -----------------------------
-# Puerto expuesto (Render)
+# Puerto Render
 # -----------------------------
 EXPOSE 10000
 
 # -----------------------------
-# Arranque de Laravel
+# Arranque
 # -----------------------------
-CMD php artisan config:clear && \
-    php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan migrate --force && \
-    php artisan serve --host=0.0.0.0 --port=10000
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000
