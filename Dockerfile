@@ -1,6 +1,8 @@
 FROM php:8.2-fpm
 
-# Instalar dependencias del sistema
+# -----------------------------
+# Dependencias del sistema
+# -----------------------------
 RUN apt-get update && apt-get install -y \
     nginx \
     supervisor \
@@ -16,13 +18,17 @@ RUN apt-get update && apt-get install -y \
     unzip \
     sqlite3 \
     libsqlite3-dev \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Configurar extensiones de PHP
+# -----------------------------
+# Extensiones PHP
+# -----------------------------
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
     pdo \
     pdo_mysql \
+    pdo_pgsql \
     pdo_sqlite \
     mbstring \
     exif \
@@ -32,33 +38,52 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     zip \
     opcache
 
-# Instalar Composer
+# -----------------------------
+# Composer
+# -----------------------------
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Instalar Node.js y npm
+# -----------------------------
+# Node.js 20 + npm
+# -----------------------------
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
-# Configurar directorio de trabajo
+# -----------------------------
+# Directorio de trabajo
+# -----------------------------
 WORKDIR /var/www/html
 
-# Copiar archivos del proyecto
+# -----------------------------
+# Copiar proyecto
+# -----------------------------
 COPY . .
 
-# Instalar dependencias de PHP
-RUN composer install --optimize-autoloader --no-dev
+# -----------------------------
+# Instalar dependencias PHP
+# -----------------------------
+RUN composer install --no-dev --optimize-autoloader
 
-# Instalar dependencias de Node y compilar assets
+# -----------------------------
+# Instalar dependencias frontend y compilar
+# -----------------------------
 RUN npm install && npm run build
 
+# -----------------------------
 # Permisos
+# -----------------------------
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Exponer puerto
+# -----------------------------
+# Puerto expuesto (Render)
+# -----------------------------
 EXPOSE 10000
 
-# Iniciar aplicación
-CMD php artisan config:cache && \
+# -----------------------------
+# Arranque de Laravel
+# -----------------------------
+CMD php artisan config:clear && \
+    php artisan config:cache && \
     php artisan route:cache && \
     php artisan serve --host=0.0.0.0 --port=10000
