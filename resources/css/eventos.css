@@ -1,0 +1,305 @@
+/* Page Header Eventos */
+.page-header-eventos {
+    padding: 16px 32px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+}
+
+/* Filtros Eventos - con fondo blanco */
+.filters-section-eventos {
+    padding: 20px 24px;
+    margin: 0 32px 24px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.search-filter-group {
+    flex: 1;
+}
+
+.select-filters-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn-filter-icon {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-primary);
+}
+
+.btn-filter-icon:hover {
+    background: var(--background);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Sección de tabla con fondo blanco */
+.table-section {
+    background: var(--card-bg);
+    margin: 0 32px 32px;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.table-container {
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: white;
+}
+
+/* Tabla Eventos */
+.eventos-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.eventos-table thead {
+    background: #f8fafc;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.eventos-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+}
+
+.eventos-table td {
+    padding: 20px 16px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
+}
+
+.eventos-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.eventos-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.eventos-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.evento-nombre {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.proyecto-cell {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.fechas-cell {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.modalidad-cell {
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.participantes-cell {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+/* Badges de estado - eventos */
+.badge-estado-evento {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.badge-estado-evento.activo {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-estado-evento.programado {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-estado-evento.finalizado {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.badge-estado-evento.cancelado {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Botón de opciones */
+.btn-more-options {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.btn-more-options:hover {
+    background: var(--background);
+    color: var(--text-primary);
+}
+
+/* Paginación personalizada para eventos */
+.pagination-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.pagination-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--border-color);
+    background: white;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled):not(.active) {
+    background: var(--background);
+    border-color: var(--primary-color);
+}
+
+.pagination-btn.active {
+    background: #0f766e;
+    color: white;
+    border-color: #0f766e;
+    font-weight: 600;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pagination-btn i {
+    font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .filters-section-eventos {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .select-filters-group {
+        justify-content: space-between;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    .eventos-table {
+        min-width: 900px;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header-eventos {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .pagination-section {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
+}
+
+/* Ajustes de ancho de columnas */
+.eventos-table th:nth-child(1),
+.eventos-table td:nth-child(1) {
+    width: 40px;
+}
+
+.eventos-table th:nth-child(2),
+.eventos-table td:nth-child(2) {
+    width: 20%;
+}
+
+.eventos-table th:nth-child(3),
+.eventos-table td:nth-child(3) {
+    width: 18%;
+}
+
+.eventos-table th:nth-child(4),
+.eventos-table td:nth-child(4) {
+    width: 14%;
+}
+
+.eventos-table th:nth-child(5),
+.eventos-table td:nth-child(5) {
+    width: 10%;
+}
+
+.eventos-table th:nth-child(6),
+.eventos-table td:nth-child(6) {
+    width: 10%;
+}
+
+.eventos-table th:nth-child(7),
+.eventos-table td:nth-child(7) {
+    width: 12%;
+}
+
+.eventos-table th:nth-child(8),
+.eventos-table td:nth-child(8) {
+    width: 60px;
+    text-align: center;
+}
