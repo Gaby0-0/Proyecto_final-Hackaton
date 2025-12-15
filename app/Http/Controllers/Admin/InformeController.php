@@ -4,15 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\EnviarInformeEmailRequest;
-use App\Mail\InformeGeneralMail;
 use App\Models\Constancia;
 use App\Models\Equipo;
 use App\Models\Evaluacion;
 use App\Models\Evento;
 use App\Models\User;
+use App\Notifications\InformeGeneralNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 
 class InformeController extends Controller
 {
@@ -292,8 +292,9 @@ class InformeController extends Controller
             'generadoPor' => Auth::user()->name,
         ];
 
-        // Enviar correo
-        Mail::to($validated['email'])->send(new InformeGeneralMail($datos));
+        // Enviar notificación por correo
+        Notification::route('mail', $validated['email'])
+            ->notify(new InformeGeneralNotification($datos));
 
         return back()->with('success', "Informe enviado exitosamente a {$validated['email']}");
     }
