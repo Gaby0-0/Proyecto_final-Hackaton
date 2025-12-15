@@ -4,11 +4,10 @@ namespace App\Notifications;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class InformeGeneralNotification extends Notification implements ShouldQueue
+class InformeGeneralNotification extends Notification
 {
     use Queueable;
 
